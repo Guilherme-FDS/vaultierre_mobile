@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Vaultierre",
+    "slug": "vaultierre",
+    "scheme": "vaultierre",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#1b1a19",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vaultierre.app"
+    },
+    "android": {
+      "package": "com.vaultierre.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1b1a19",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-web-browser",
+      "@react-native-community/datetimepicker"
+    ],
+    "owner": "guilhermefds"
+  }
+}
