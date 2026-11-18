@@ -17,6 +17,11 @@ export default function CorporativoScreen({ navigation }) {
         Surpreenda clientes, parceiros e colaboradores com uma experiência de bebidas premium.
       </Text>
 
+      <View style={[styles.card, shadow.card]}>
+        <Text style={styles.cardTitulo}>A partir de R$ 438 por kit</Text>
+        <Text style={styles.cardTexto}>Conforme volume e personalização · pedido mínimo de 10 kits · kit avulso ou assinatura corporativa.</Text>
+      </View>
+
       {BENEFICIOS.map((b) => (
         <View key={b.titulo} style={[styles.card, shadow.card]}>
           <Text style={styles.cardTitulo}>{b.titulo}</Text>

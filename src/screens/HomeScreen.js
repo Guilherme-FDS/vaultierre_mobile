@@ -81,7 +81,7 @@ export default function HomeScreen({ navigation }) {
               {produto?.descricao || 'Garrafas premium selecionadas pela nossa curadoria, entregues na sua porta com segurança.'}
             </Text>
             <Text style={styles.boxPreco}>
-              {formatarMoeda(produto?.preco ?? 649)}
+              {'a partir de '}{formatarMoeda(590)}
               <Text style={styles.boxPeriodo}>/mês</Text>
             </Text>
             <BotaoDourado title="Quero Assinar" onPress={() => navigation.navigate('Assinatura')} />
@@ -96,7 +96,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.sectionTitulo}>
             Como <Text style={styles.dourado}>funciona</Text>
           </Text>
-          <Passo n="01" titulo="Escolha seu plano" desc="Mensal, semestral ou anual — você decide o compromisso." />
+          <Passo n="01" titulo="Escolha seu plano" desc="Essencial (1 rótulo) ou Reserva (2 rótulos), mensal ou anual." />
           <Passo n="02" titulo="Nós cuidamos da seleção" desc="Curadoria especializada de bebidas premium feita para você." />
           <Passo n="03" titulo="Receba em casa" desc="Sua box chega todo mês com segurança e discrição." />
           <Passo n="04" titulo="Viva a experiência" desc="Deguste, compartilhe e participe da comunidade exclusiva." />

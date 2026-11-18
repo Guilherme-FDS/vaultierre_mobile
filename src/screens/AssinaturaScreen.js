@@ -21,10 +21,13 @@ const BADGE_RECORRENCIA = {
 }
 
 const BENEFICIOS = {
-  mensal: ['Flexibilidade total', 'Renovação mensal', 'Sem compromisso'],
-  semestral: ['5% de desconto', '6 meses de acesso', 'Custo-benefício superior'],
-  anual: ['10% de desconto', '12 meses de acesso', 'Maior economia'],
+  mensal: () => ['Flexibilidade total', 'Renovação mensal', 'Sem compromisso'],
+  semestral: (p) => [`${Number(p.desconto_pct)}% de desconto`, '6 meses de acesso'],
+  anual: (p) => [`${Number(p.desconto_pct)}% de desconto`, '12 meses de acesso', 'Pagamento único à vista'],
 }
+
+// Precificação v2: Essencial (1 rótulo) e Reserva (2 rótulos)
+const rotulosDe = (prod) => (prod?.nome || '').toLowerCase().includes('reserva') ? 2 : 1
 
 function moeda(valor) {
   return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -32,6 +35,7 @@ function moeda(valor) {
 
 export default function AssinaturaScreen({ navigation }) {
   const { user } = useAuth()
+  const [produtos, setProdutos] = useState([])
   const [produto, setProduto] = useState(null)
   const [planos, setPlanos] = useState([])
   const [selecionado, setSelecionado] = useState(null)
@@ -45,18 +49,24 @@ export default function AssinaturaScreen({ navigation }) {
     try {
       const { data: lista } = await api.get('/produtos/')
       if (!lista?.length) return
-      const prod = lista[0]
-      setProduto(prod)
-      const { data: planosData } = await api.get(`/produtos/${prod.id}/planos`)
-      const ativos = planosData.filter(p => p.ativo)
-      setPlanos(ativos)
-      const mensal = ativos.find(p => p.recorrencia === 'mensal')
-      setSelecionado(mensal?.id ?? ativos[0]?.id ?? null)
+      const ativosProd = lista.filter(p => p.ativo !== false)
+      setProdutos(ativosProd)
+      await escolherProduto(ativosProd[0])
     } catch {
       Alert.alert('Erro', 'Não foi possível carregar os planos. Verifique sua conexão.')
     } finally {
       setCarregando(false)
     }
+  }
+
+  async function escolherProduto(prod) {
+    if (!prod) return
+    setProduto(prod)
+    const { data: planosData } = await api.get(`/produtos/${prod.id}/planos`)
+    const ativos = planosData.filter(p => p.ativo)
+    setPlanos(ativos)
+    const mensal = ativos.find(p => p.recorrencia === 'mensal')
+    setSelecionado(mensal?.id ?? ativos[0]?.id ?? null)
   }
 
   async function assinar() {
@@ -106,13 +116,29 @@ export default function AssinaturaScreen({ navigation }) {
         Escolha seu <Text style={styles.dourado}>plano</Text>
       </Text>
       <Text style={styles.sub}>
-        Duas garrafas premium por mês. Curadoria especializada entregue na sua porta.
+        Um ou dois rótulos raros por mês. Curadoria especializada entregue na sua porta.
       </Text>
+
+      {produtos.length > 1 && (
+        <View style={styles.tabs}>
+          {produtos.map(prod => (
+            <TouchableOpacity
+              key={prod.id}
+              style={[styles.tab, produto?.id === prod.id && styles.tabAtiva]}
+              onPress={() => escolherProduto(prod).catch(() => {})}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.tabNome, produto?.id === prod.id && styles.tabNomeAtivo]}>{prod.nome}</Text>
+              <Text style={styles.tabSub}>{rotulosDe(prod)} {rotulosDe(prod) > 1 ? 'rótulos' : 'rótulo'}/mês</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {planos.map((plano) => {
         const ativo = selecionado === plano.id
         const badge = BADGE_RECORRENCIA[plano.recorrencia] ?? { texto: '', roxo: false }
-        const beneficios = BENEFICIOS[plano.recorrencia] ?? []
+        const beneficios = (BENEFICIOS[plano.recorrencia] ?? (() => []))(plano)
         const precoMensal = plano.recorrencia === 'mensal'
           ? Number(plano.preco_total)
           : Number(plano.preco_total) / (plano.recorrencia === 'semestral' ? 6 : 12)
@@ -181,6 +207,12 @@ export default function AssinaturaScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  tabs: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  tab: { flex: 1, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.borda || '#ddd', alignItems: 'center' },
+  tabAtiva: { borderColor: colors.dourado, backgroundColor: 'rgba(201,168,76,0.08)' },
+  tabNome: { fontSize: 16, fontWeight: '600', color: colors.texto || '#1b1a19' },
+  tabNomeAtivo: { color: colors.dourado },
+  tabSub: { fontSize: 12, color: colors.textoSecundario || '#777', marginTop: 2 },
   container: { flex: 1, backgroundColor: colors.fundo },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.fundo },
   badgePill: {
