@@ -2,9 +2,9 @@
 // Ao trocar para o domínio próprio, altere só aqui.
 export const BRAND_NAME = 'Vaultierre'
 
-export const API_URL = 'https://vaultierre-backend.onrender.com/api'
+export const API_URL = 'https://api.vaultierre.com.br/api'
 export const STRAPI_URL = 'https://vaultierre-cms.onrender.com'
-export const SITE_URL = 'https://vaultierre-frontend.onrender.com'
+export const SITE_URL = 'https://vaultierre.com.br'
 
 export const CONTATO_EMAIL = 'contato@vaultierre.com.br'
 

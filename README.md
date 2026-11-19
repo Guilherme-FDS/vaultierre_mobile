@@ -32,7 +32,7 @@ npx expo start
 
 ## API
 
-Consome o mesmo backend do site: `https://vaultierre-backend.onrender.com/api` (URLs em `src/config.js`)
+Consome o mesmo backend do site: `https://api.vaultierre.com.br/api` (URLs em `src/config.js`)
 
 Endpoints usados: `/auth/login`, `/auth/cadastro`, `/auth/me`, `/produtos/`, `/carrinho/adicionar`, `/assinaturas/minhas`, `/carrinho/meus_pedidos`.
 

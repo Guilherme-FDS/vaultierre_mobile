@@ -7,7 +7,7 @@ describe('buildGoogleAuthUrl', () => {
   test('aponta pro endpoint do Google com client_id e redirect do site', () => {
     expect(url).toContain('https://accounts.google.com/o/oauth2/v2/auth?')
     expect(url).toContain('client_id=465037215980-thmlbjcja9f3eob73b305kfv3q0a8om1.apps.googleusercontent.com')
-    expect(url).toContain(encodeURIComponent('https://vaultierre-frontend.onrender.com/auth/google/callback'))
+    expect(url).toContain(encodeURIComponent('https://vaultierre.com.br/auth/google/callback'))
     expect(url).toContain('response_type=code')
   })
   test('inclui state mobile com returnUrl embutido', () => {
@@ -20,7 +20,7 @@ describe('buildFacebookAuthUrl', () => {
   test('aponta pro dialog do Facebook com app_id e redirect do site', () => {
     expect(url).toContain('https://www.facebook.com/v19.0/dialog/oauth?')
     expect(url).toContain('client_id=1400421088511853')
-    expect(url).toContain(encodeURIComponent('https://vaultierre-frontend.onrender.com/auth/facebook/callback'))
+    expect(url).toContain(encodeURIComponent('https://vaultierre.com.br/auth/facebook/callback'))
     expect(url).toContain(`state=${encodeURIComponent('mobile|' + RETURN_URL)}`)
   })
 })
