@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
+import * as Notifications from 'expo-notifications'
 import { Text, Alert } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native'
+import { NavigationContainer, DefaultTheme, createNavigationContainerRef } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { AuthProvider } from './src/context/AuthContext'
+import { telaDaNotificacao } from './src/services/push'
 import { colors } from './src/theme'
 import AgeGate from './src/components/AgeGate'
 import HomeScreen from './src/screens/HomeScreen'
@@ -30,6 +32,15 @@ import EnvioDevolucoesScreen from './src/screens/EnvioDevolucoesScreen'
 import PoliticaReembolsoScreen from './src/screens/PoliticaReembolsoScreen'
 
 const Tab = createBottomTabNavigator()
+const navegacao = createNavigationContainerRef()
+const TABS = ['Home', 'Assinatura', 'Comunidade', 'Perfil']
+
+// Toque numa notificação: abre a tela indicada em data.tela
+function abrirTela(tela) {
+  if (!tela || !navegacao.isReady()) return
+  if (TABS.includes(tela)) navegacao.navigate('Tabs', { screen: tela })
+  else navegacao.navigate(tela)
+}
 const Stack = createNativeStackNavigator()
 
 const tema = {
@@ -82,6 +93,14 @@ export default function App() {
     AsyncStorage.getItem('age_verified').then(v => setIdadeVerificada(v === 'true'))
   }, [])
 
+  const [telaPendente, setTelaPendente] = useState(null)
+  useEffect(() => {
+    // app aberto pela notificação (estava fechado) e toques com o app em uso
+    Notifications.getLastNotificationResponseAsync().then(r => setTelaPendente(telaDaNotificacao(r))).catch(() => {})
+    const sub = Notifications.addNotificationResponseReceivedListener(r => abrirTela(telaDaNotificacao(r)))
+    return () => sub.remove()
+  }, [])
+
   if (idadeVerificada === null) return null
 
   if (!idadeVerificada) {
@@ -99,7 +118,7 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <NavigationContainer theme={tema}>
+      <NavigationContainer theme={tema} ref={navegacao} onReady={() => { abrirTela(telaPendente); setTelaPendente(null) }}>
         <StatusBar style="dark" />
         <Stack.Navigator>
           <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import api from '../services/api'
+import { registrarPush, removerPush } from '../services/push'
 
 const AuthContext = createContext(null)
 
@@ -18,6 +19,7 @@ export function AuthProvider({ children }) {
       if (token) {
         const { data } = await api.get('/auth/me')
         setUser(data)
+        registrarPush()
       }
     } catch {
       await AsyncStorage.removeItem('token')
@@ -32,6 +34,7 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem('token', token)
     const me = await api.get('/auth/me')
     setUser(me.data)
+    registrarPush()
     return me.data
   }
 
@@ -41,6 +44,7 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem('token', token)
     const me = await api.get('/auth/me')
     setUser(me.data)
+    registrarPush()
     return me.data
   }
 
@@ -52,6 +56,7 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
+    await removerPush()
     try { await api.post('/auth/logout') } catch {}
     await AsyncStorage.removeItem('token')
     setUser(null)
