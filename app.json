@@ -35,6 +35,11 @@
         }
       ]
     ],
-    "owner": "guilhermefds"
+    "owner": "guilhermefds",
+    "extra": {
+      "eas": {
+        "projectId": "417f0e21-3edf-42f4-86ca-841d57646826"
+      }
+    }
   }
 }
