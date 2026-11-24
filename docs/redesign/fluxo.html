@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Vaultierre App — Fluxo e navegação</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ouro: #A8842C; --ouro2: #C9A84C; --tinta: #1B1A19; --cinza: #6B665F; --linha: #E2DCCF; --fundo: #F6F3EE; --verde: #2F7D4F; --vermelho: #A4453A; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--fundo); font-family: 'DM Sans', sans-serif; color: var(--tinta); padding: 44px 40px 60px; width: 1700px; }
+  h1 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 46px; }
+  .sub { color: var(--cinza); margin: 6px 0 30px; font-size: 16px; max-width: 1100px; line-height: 1.5; }
+  h2 { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 28px; margin: 34px 0 14px; }
+  .jornada { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; align-items: stretch; }
+  .etapa { background: #fff; border: 1px solid var(--linha); border-radius: 16px; padding: 16px; position: relative; }
+  .etapa:not(:last-child)::after { content: '→'; position: absolute; right: -13px; top: 18px; color: var(--ouro); font-size: 18px; font-weight: 700; }
+  .num { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--ouro); font-weight: 700; }
+  .etapa h3 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; margin: 2px 0 10px; }
+  .passo { font-size: 13px; line-height: 1.4; padding: 7px 9px; border-radius: 8px; background: var(--fundo); margin-bottom: 6px; }
+  .passo b { font-weight: 600; }
+  .passo.tela { background: #FBF6EA; border-left: 3px solid var(--ouro2); }
+  .passo.aviso { background: #EEF6F0; border-left: 3px solid var(--verde); }
+  .passo.saida { background: #F8ECEA; border-left: 3px solid var(--vermelho); }
+  .passo small { display: block; color: var(--cinza); font-size: 11.5px; margin-top: 2px; }
+  .ciclo { margin-top: 14px; background: #fff; border: 1px solid var(--linha); border-radius: 16px; padding: 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ciclo .t { font-weight: 700; margin-right: 8px; }
+  .no { background: #FBF6EA; border: 1px solid #EADFC4; border-radius: 999px; padding: 7px 14px; font-size: 13px; }
+  .seta { color: var(--ouro); font-weight: 700; }
+  .abas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .aba { background: #fff; border: 1px solid var(--linha); border-radius: 16px; overflow: hidden; }
+  .aba header { background: var(--tinta); color: #F3EEE4; padding: 14px 16px; }
+  .aba header b { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 500; }
+  .aba header span { display: block; font-size: 12px; color: #C9BFAE; margin-top: 2px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; }
+  .col { padding: 12px 14px; font-size: 13px; line-height: 1.5; }
+  .col + .col { border-left: 1px solid var(--linha); }
+  .col h4 { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cinza); margin-bottom: 6px; }
+  .col ul { padding-left: 16px; }
+  .legenda { display: flex; gap: 18px; font-size: 12.5px; color: var(--cinza); margin-top: 12px; }
+  .legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .faltas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .falta { background: #fff; border: 1px solid var(--linha); border-radius: 14px; padding: 14px 16px; font-size: 13.5px; line-height: 1.5; }
+  .falta b { display: block; font-size: 14.5px; margin-bottom: 4px; }
+  .tag { font-size: 10.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; margin-left: 6px; }
+  .tag.ok { background: #E3F1E8; color: var(--verde); }
+  .tag.novo { background: #FBEEDC; color: #9A6412; }
+  .tag.fora { background: #EFECE7; color: var(--cinza); }
+</style>
+</head>
+<body>
+<h1>Vaultierre App: jornada do cliente e navegação</h1>
+<p class="sub">O app faz o mesmo que o site, só que no bolso. Nada além do que o clube já entrega: conhecer o clube, escolher o plano, assinar, acompanhar a assinatura e os pedidos, indicar amigos e ler o conteúdo. Cada tela tem um motivo de existir e um caminho de volta.</p>
+
+<h2>1. A jornada: de onde chega, por onde passa, como sai</h2>
+<div class="jornada">
+  <div class="etapa"><div class="num">Etapa 1</div><h3>Chega</h3>
+    <div class="passo"><b>Instagram / Beacons</b><small>link da bio</small></div>
+    <div class="passo"><b>QR da feira</b><small>?utm_source=feira</small></div>
+    <div class="passo"><b>Link de indicação</b><small>código aplicado sozinho</small></div>
+    <div class="passo"><b>Google / site</b><small>"baixe o app"</small></div>
+    <div class="passo"><b>Loja de apps</b></div>
+  </div>
+  <div class="etapa"><div class="num">Etapa 2</div><h3>Conhece</h3>
+    <div class="passo tela"><b>Confirma 18+</b><small>só na primeira vez</small></div>
+    <div class="passo tela"><b>Início (sem login)</b><small>como funciona, edições anteriores, depoimentos</small></div>
+    <div class="passo tela"><b>Quiz de paladar</b><small>opcional: indica o plano</small></div>
+    <div class="passo">Navega livre, <b>sem precisar de conta</b></div>
+  </div>
+  <div class="etapa"><div class="num">Etapa 3</div><h3>Decide</h3>
+    <div class="passo tela"><b>Planos</b><small>Essencial e Reserva lado a lado, mensal ou anual</small></div>
+    <div class="passo tela"><b>Detalhe do plano</b><small>o que vem na caixa, prazo de entrega por CEP</small></div>
+    <div class="passo">Toca em <b>Assinar</b></div>
+  </div>
+  <div class="etapa"><div class="num">Etapa 4</div><h3>Compra</h3>
+    <div class="passo tela"><b>Entrar ou criar conta</b><small>só aqui: Apple, Google ou e-mail (4 campos)</small></div>
+    <div class="passo tela"><b>Endereço</b><small>CEP preenche o resto</small></div>
+    <div class="passo tela"><b>CPF e celular</b><small>só se faltar</small></div>
+    <div class="passo tela"><b>Resumo</b><small>cupom / indicação, frete grátis, prazo</small></div>
+    <div class="passo"><b>Paga no Mercado Pago</b><small>abre e volta ao app</small></div>
+    <div class="passo aviso"><b>"Bem-vindo ao clube"</b><small>tela + e-mail + notificação</small></div>
+  </div>
+  <div class="etapa"><div class="num">Etapa 5</div><h3>Acompanha</h3>
+    <div class="passo tela"><b>Minha assinatura</b><small>status, plano, próxima cobrança, endereço de entrega</small></div>
+    <div class="passo tela"><b>Pedidos e pagamentos</b><small>cada cobrança com valor e status</small></div>
+    <div class="passo">Troca de plano ou de endereço <b>sem falar com ninguém</b></div>
+  </div>
+  <div class="etapa"><div class="num">Etapa 6</div><h3>Fica ou sai</h3>
+    <div class="passo tela"><b>Indique e ganhe</b><small>link + WhatsApp</small></div>
+    <div class="passo saida"><b>Cancelar assinatura</b><small>oferece trocar para Essencial antes; acesso até o fim do ciclo</small></div>
+    <div class="passo saida"><b>Pagamento recusado</b><small>aviso para atualizar o cartão</small></div>
+    <div class="passo saida"><b>Sair / Excluir conta</b><small>exigido pelas lojas</small></div>
+  </div>
+</div>
+
+<div class="ciclo"><span class="t">Por que ele volta todo mês:</span>
+  <span class="no">Cobrança aprovada → notificação "assinatura renovada"</span><span class="seta">→</span>
+  <span class="no">Nova edição revelada → notificação do admin</span><span class="seta">→</span>
+  <span class="no">Abre o app: Início mostra a edição e o blog</span><span class="seta">→</span>
+  <span class="no">Confere a assinatura e os pedidos</span><span class="seta">→</span>
+  <span class="no">Indica um amigo</span>
+</div>
+<div class="legenda"><span><i style="background:#FBF6EA;border-left:3px solid #C9A84C"></i>tela do app</span><span><i style="background:#EEF6F0;border-left:3px solid #2F7D4F"></i>confirmação</span><span><i style="background:#F8ECEA;border-left:3px solid #A4453A"></i>saída ou problema</span></div>
+
+<h2>2. Navegação: 4 abas que mudam conforme a pessoa é visitante ou assinante</h2>
+<div class="abas">
+  <div class="aba"><header><b>Início</b><span>a vitrine e as novidades</span></header>
+    <div class="cols"><div class="col"><h4>Visitante</h4><ul><li>Chamada principal</li><li>Como funciona</li><li>O que já entregamos</li><li>Depoimentos</li><li>Blog</li></ul></div>
+    <div class="col"><h4>Assinante</h4><ul><li>Card da assinatura (status e próxima cobrança)</li><li>Edições</li><li>Blog</li><li>Indique e ganhe</li></ul></div></div></div>
+  <div class="aba"><header><b>Planos</b><span>escolher e assinar</span></header>
+    <div class="cols"><div class="col"><h4>Visitante</h4><ul><li>Essencial e Reserva lado a lado</li><li>Mensal ou anual</li><li>Quiz de paladar</li><li>Presentes corporativos</li></ul></div>
+    <div class="col"><h4>Assinante</h4><ul><li>O plano atual em destaque</li><li>Trocar de plano</li><li>Presentes corporativos</li></ul></div></div></div>
+  <div class="aba"><header><b>Assinatura</b><span>conferir tudo da compra</span></header>
+    <div class="cols"><div class="col"><h4>Visitante</h4><ul><li>"Você ainda não é membro" e botão para os planos</li></ul></div>
+    <div class="col"><h4>Assinante</h4><ul><li>Status, plano e próxima cobrança</li><li>Endereço de entrega</li><li>Pedidos e pagamentos</li><li>Trocar plano ou cancelar</li></ul></div></div></div>
+  <div class="aba"><header><b>Conta</b><span>dados, ajuda e saída</span></header>
+    <div class="cols"><div class="col"><h4>Visitante</h4><ul><li>Entrar / criar conta</li><li>FAQ, contato e políticas</li></ul></div>
+    <div class="col"><h4>Assinante</h4><ul><li>Dados e endereços</li><li>Segurança</li><li>Indique e ganhe</li><li>FAQ, contato e políticas</li><li>Sair / excluir conta</li></ul></div></div></div>
+</div>
+
+<h2>3. Escopo: o que já existe e o que falta</h2>
+<div class="faltas">
+  <div class="falta"><b>Já existe no site e na API <span class="tag ok">pronto</span></b>Planos, quiz, compra com Mercado Pago, assinatura (trocar plano, endereço, cancelar), pedidos, indicação, edições anteriores, blog, FAQ, notificações.</div>
+  <div class="falta"><b>Falta para as lojas <span class="tag novo">obrigatório</span></b>Excluir conta dentro do app e Entrar com Apple no iPhone. É pouco código; a conta Apple Developer é sua.</div>
+  <div class="falta"><b>Fica de fora <span class="tag fora">fora do escopo</span></b>"Minha adega", avaliação de garrafas e rastreio da entrega no app. Hoje o sistema não guarda o que cada cliente recebeu, nem o código de rastreio.</div>
+</div>
+</body>
+</html>
