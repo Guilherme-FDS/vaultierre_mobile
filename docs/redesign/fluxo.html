@@ -38,13 +38,14 @@
   .col ul { padding-left: 16px; }
   .legenda { display: flex; gap: 18px; font-size: 12.5px; color: var(--cinza); margin-top: 12px; }
   .legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
-  .faltas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .faltas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
   .falta { background: #fff; border: 1px solid var(--linha); border-radius: 14px; padding: 14px 16px; font-size: 13.5px; line-height: 1.5; }
   .falta b { display: block; font-size: 14.5px; margin-bottom: 4px; }
   .tag { font-size: 10.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; margin-left: 6px; }
   .tag.ok { background: #E3F1E8; color: var(--verde); }
   .tag.novo { background: #FBEEDC; color: #9A6412; }
   .tag.fora { background: #EFECE7; color: var(--cinza); }
+  .tag.futuro { background: #E8E4F6; color: #4B3A8C; }
 </style>
 </head>
 <body>
@@ -122,6 +123,7 @@
   <div class="falta"><b>Já existe no site e na API <span class="tag ok">pronto</span></b>Planos, quiz, compra com Mercado Pago, assinatura (trocar plano, endereço, cancelar), pedidos, indicação, edições anteriores, blog, FAQ, notificações.</div>
   <div class="falta"><b>Falta para as lojas <span class="tag novo">obrigatório</span></b>Excluir conta dentro do app e Entrar com Apple no iPhone. É pouco código; a conta Apple Developer é sua.</div>
   <div class="falta"><b>Fica de fora <span class="tag fora">fora do escopo</span></b>"Minha adega", avaliação de garrafas e rastreio da entrega no app. Hoje o sistema não guarda o que cada cliente recebeu, nem o código de rastreio.</div>
+  <div class="falta"><b>Próxima fase <span class="tag futuro">futuro</span></b>Pagar dentro do app, do jeito nativo do celular: Apple Pay no iPhone e Google Pay no Android, com Face ID ou digital, sem sair para o navegador. Por ser produto físico, as lojas permitem e não cobram comissão. Depende de um gateway com Apple Pay e Google Pay e cobrança recorrente.</div>
 </div>
 </body>
 </html>
