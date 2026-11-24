@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vaultierre App — Nova direção</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --noir: #0E0D0C; --surface: #171513; --surface2: #1F1C19; --linha: rgba(201,168,76,.16);
+    --marfim: #F3EEE4; --muted: #9C958A; --ouro: #C9A84C; --ouro2: #E2C06A; --verde: #6FBF8E;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #E9E5DE; font-family: 'DM Sans', sans-serif; color: var(--marfim); padding: 40px 24px 60px; }
+  header.doc { max-width: 1240px; margin: 0 auto 36px; color: #1B1A19; }
+  header.doc h1 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 44px; }
+  header.doc p { color: #555; max-width: 780px; line-height: 1.6; margin-top: 8px; }
+  .grade { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; max-width: 1700px; margin: 0 auto; }
+  .tela { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .rotulo { color: #1B1A19; font-weight: 600; font-size: 14px; letter-spacing: .5px; }
+  .fone { width: 300px; height: 640px; border-radius: 44px; background: var(--noir); position: relative; overflow: hidden;
+          box-shadow: 0 30px 60px rgba(0,0,0,.25), 0 0 0 10px #111, 0 0 0 11px #333; }
+  .status { height: 40px; display: flex; justify-content: space-between; align-items: center; padding: 0 26px; font-size: 12px; font-weight: 600; position: relative; z-index: 3; }
+  .ilha { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 90px; height: 26px; background: #000; border-radius: 20px; z-index: 4; }
+  .conteudo { padding: 0 18px 90px; height: calc(100% - 40px); overflow: hidden; }
+  .serif { font-family: 'Cormorant Garamond', serif; }
+  .eyebrow { font-size: 10px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--ouro); font-weight: 600; }
+  .muted { color: var(--muted); }
+  /* tab bar */
+  .tabs { position: absolute; left: 12px; right: 12px; bottom: 14px; height: 62px; border-radius: 22px; background: rgba(28,25,22,.78);
+          backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,.06); display: flex; justify-content: space-around; align-items: center; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9.5px; color: var(--muted); letter-spacing: .3px; }
+  .tab svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+  .tab.on { color: var(--ouro2); }
+  .tab.on::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--ouro2); margin-top: -1px; }
+  .ic { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+  /* 1 boas-vindas */
+  .bv { position: absolute; inset: 0; background: url('hero-vaultierre.webp') center/cover; }
+  .bv::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,13,12,.15) 0%, rgba(14,13,12,.55) 40%, #0E0D0C 72%); }
+  .bv-txt { position: absolute; left: 24px; right: 24px; bottom: 34px; z-index: 2; }
+  .bv-txt img { width: 54px; margin-bottom: 18px; }
+  .bv-txt h2 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 34px; line-height: 1.05; }
+  .bv-txt h2 em { color: var(--ouro2); font-style: italic; }
+  .bv-txt p { font-size: 13px; color: #CFC8BC; margin: 12px 0 22px; line-height: 1.5; }
+  .btn { height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 14.5px; margin-bottom: 10px; }
+  .btn.branco { background: #fff; color: #000; }
+  .btn.contorno { border: 1px solid rgba(255,255,255,.22); color: var(--marfim); }
+  .btn.ouro { background: linear-gradient(135deg, var(--ouro2), var(--ouro) 55%, #9E7A2E); color: #15120D; }
+  .link { text-align: center; font-size: 13px; color: var(--ouro2); margin-top: 6px; }
+  .legal { text-align: center; font-size: 10px; color: #7E776C; margin-top: 14px; }
+  /* 2 inicio */
+  .topo { display: flex; justify-content: space-between; align-items: center; margin: 6px 0 18px; }
+  .topo h3 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 26px; line-height: 1; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--linha); display: grid; place-items: center; color: var(--ouro2); }
+  .edicao { height: 250px; border-radius: 22px; position: relative; overflow: hidden; background: url('entrega-dassai-diplomatico.webp') center/cover; }
+  .edicao::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(14,13,12,.92)); }
+  .edicao .info { position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2; }
+  .edicao h4 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 500; margin: 4px 0 8px; }
+  .contagem { display: flex; gap: 6px; }
+  .contagem span { background: rgba(255,255,255,.1); backdrop-filter: blur(8px); border-radius: 8px; padding: 5px 8px; font-size: 11px; font-weight: 600; }
+  .contagem b { color: var(--ouro2); }
+  .card { background: var(--surface); border: 1px solid var(--linha); border-radius: 18px; padding: 14px; margin-top: 12px; }
+  .passos { display: flex; align-items: center; margin-top: 10px; }
+  .passo { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 9.5px; color: var(--muted); flex: 0 0 auto; }
+  .bola { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #4A4540; }
+  .bola.ok { background: var(--ouro); border-color: var(--ouro); }
+  .trilho { flex: 1; height: 1.5px; background: #3A3631; margin: 0 4px 14px; }
+  .trilho.ok { background: var(--ouro); }
+  .linha-card { display: flex; justify-content: space-between; align-items: center; }
+  .quiz { display: flex; gap: 12px; align-items: center; }
+  .quiz .selo { width: 44px; height: 44px; border-radius: 12px; background: rgba(201,168,76,.12); display: grid; place-items: center; color: var(--ouro2); flex: 0 0 auto; }
+  /* 3 clube */
+  .seg { display: flex; background: var(--surface); border-radius: 12px; padding: 3px; margin: 4px 0 14px; border: 1px solid var(--linha); }
+  .seg span { flex: 1; text-align: center; font-size: 12px; padding: 8px 0; border-radius: 9px; color: var(--muted); font-weight: 600; }
+  .seg span.on { background: var(--surface2); color: var(--marfim); }
+  .seg small { color: var(--verde); font-weight: 600; }
+  .plano { border-radius: 20px; padding: 16px; border: 1px solid var(--linha); background: var(--surface); margin-bottom: 12px; position: relative; }
+  .plano.destaque { border-color: rgba(226,192,106,.55); background: linear-gradient(160deg, #241F18, #171513 60%); }
+  .plano .tag { position: absolute; top: 14px; right: 14px; font-size: 9.5px; letter-spacing: 1.4px; text-transform: uppercase; color: #15120D; background: var(--ouro2); padding: 4px 8px; border-radius: 20px; font-weight: 700; }
+  .plano h4 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 26px; }
+  .preco { font-size: 24px; font-weight: 600; margin: 6px 0 2px; }
+  .preco small { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .plano ul { list-style: none; margin-top: 10px; display: grid; gap: 6px; font-size: 12px; color: #CFC8BC; }
+  .plano li::before { content: '—'; color: var(--ouro); margin-right: 8px; }
+  .garrafas { display: flex; gap: 4px; margin-top: 4px; }
+  .garrafas svg { width: 14px; height: 22px; fill: var(--ouro); }
+  .fixo { position: absolute; left: 14px; right: 14px; bottom: 88px; }
+  /* 4 adega */
+  .grade-g { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .gar { background: var(--surface); border: 1px solid var(--linha); border-radius: 16px; overflow: hidden; }
+  .gar .foto { height: 120px; background-size: cover; background-position: center; }
+  .gar .t { padding: 9px 10px 11px; }
+  .gar b { font-size: 12.5px; font-weight: 600; display: block; }
+  .gar small { font-size: 10px; color: var(--muted); }
+  .estrelas { color: var(--ouro2); font-size: 10px; letter-spacing: 1px; margin-top: 3px; }
+  .chip { display: inline-block; border: 1px solid var(--linha); border-radius: 20px; padding: 5px 10px; font-size: 11px; color: var(--muted); margin: 0 4px 12px 0; }
+  .chip.on { border-color: var(--ouro); color: var(--ouro2); }
+  /* 5 conta */
+  .perfil { display: flex; gap: 12px; align-items: center; margin: 10px 0 16px; }
+  .perfil .av { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, #2A251E, #15120D); border: 1px solid var(--ouro); display: grid; place-items: center; font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--ouro2); }
+  .lista { background: var(--surface); border: 1px solid var(--linha); border-radius: 18px; margin-top: 12px; }
+  .item { display: flex; align-items: center; gap: 12px; padding: 13px 14px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .item:last-child { border-bottom: 0; }
+  .item .ic { color: var(--ouro2); }
+  .item .seta { margin-left: auto; color: #5A544C; }
+  .ass { background: linear-gradient(150deg, #2A2319, #171513 70%); border: 1px solid rgba(226,192,106,.4); border-radius: 18px; padding: 14px; }
+  .notas { max-width: 1240px; margin: 46px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; color: #1B1A19; }
+  .nota { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 0 rgba(0,0,0,.05); }
+  .nota h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .nota ul { padding-left: 18px; color: #444; font-size: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<header class="doc">
+  <h1>Vaultierre — nova cara do app</h1>
+  <p>Proposta de direção: escuro como uma adega, tipografia do site (Cormorant + DM Sans), fotografia grande, ouro só nos detalhes e ícones de traço fino no lugar de emojis. Menos texto, mais imagem, gestos nativos e a mesma sofisticação do site.</p>
+</header>
+
+<div class="grade">
+  <!-- 1. Boas-vindas / login -->
+  <div class="tela"><span class="rotulo">1 · Boas-vindas e login</span>
+    <div class="fone"><div class="ilha"></div><div class="bv"></div>
+      <div class="status"><span>9:41</span><span>●●●</span></div>
+      <div class="bv-txt">
+        <img src="selo-vaultierre.png" alt="">
+        <h2>Rótulos que não chegam às <em>prateleiras.</em></h2>
+        <p>Curadoria de destilados raros, entregue todo mês na sua porta.</p>
+        <div class="btn branco"><svg width="15" height="18" viewBox="0 0 814 1000"><path d="M788 341c-6 4-108 62-108 190 0 148 130 200 134 202-1 3-21 72-69 142-43 62-88 124-156 124s-86-40-164-40c-77 0-104 41-167 41s-106-57-156-128C44 789 0 668 0 554c0-184 120-282 237-282 63 0 115 41 155 41 38 0 97-44 168-44 27 0 124 3 188 72zM549 160c29-35 50-83 50-131 0-7-1-14-2-19-48 2-104 32-138 72-27 30-52 79-52 128 0 7 1 15 2 17 3 1 8 1 13 1 43 0 97-29 127-68z"/></svg>Continuar com Apple</div>
+        <div class="btn contorno"><svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Continuar com Google</div>
+        <div class="link">Entrar ou criar conta com e-mail</div>
+        <div class="legal">Ao continuar, confirmo ter 18 anos ou mais. Beba com moderação.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Início -->
+  <div class="tela"><span class="rotulo">2 · Início</span>
+    <div class="fone"><div class="ilha"></div>
+      <div class="status"><span>9:41</span><span>●●●</span></div>
+      <div class="conteudo">
+        <div class="topo"><div><div class="eyebrow">Boa noite</div><h3>Guilherme</h3></div>
+          <div class="avatar"><svg class="ic" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div></div>
+        <div class="edicao"><div class="info"><div class="eyebrow">Edição de dezembro</div><h4>A revelação está chegando</h4>
+          <div class="contagem"><span><b>06</b> dias</span><span><b>14</b> h</span><span><b>22</b> min</span></div></div></div>
+        <div class="card"><div class="linha-card"><span class="eyebrow">Sua próxima caixa</span><span class="muted" style="font-size:11px">Reserva · 2 rótulos</span></div>
+          <div class="passos"><div class="passo"><div class="bola ok"></div>Curadoria</div><div class="trilho ok"></div>
+            <div class="passo"><div class="bola ok"></div>Embalagem</div><div class="trilho"></div>
+            <div class="passo"><div class="bola"></div>Enviada</div><div class="trilho"></div>
+            <div class="passo"><div class="bola"></div>Entregue</div></div></div>
+        <div class="card quiz"><div class="selo"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36z"/></svg></div>
+          <div><b style="font-size:13.5px">Defumado &amp; Intenso</b><div class="muted" style="font-size:11.5px;margin-top:2px">Seu perfil guia a curadoria · refazer</div></div></div>
+      </div>
+      <div class="tabs">
+        <div class="tab on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M8 2h8M9 2v5.5L6 12v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9l-3-4.5V2"/><path d="M6 14h12"/></svg>Clube</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Adega</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Conta</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Clube / planos -->
+  <div class="tela"><span class="rotulo">3 · Clube (os dois planos lado a lado)</span>
+    <div class="fone"><div class="ilha"></div>
+      <div class="status"><span>9:41</span><span>●●●</span></div>
+      <div class="conteudo">
+        <div class="topo"><div><div class="eyebrow">O clube</div><h3>Escolha seu plano</h3></div></div>
+        <div class="seg"><span class="on">Mensal</span><span>Anual <small>−12%</small></span></div>
+        <div class="plano"><h4>Essencial</h4>
+          <div class="garrafas"><svg viewBox="0 0 14 22"><path d="M5 0h4v5l2 3v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8l2-3z"/></svg></div>
+          <div class="preco">R$ 590 <small>/mês</small></div>
+          <ul><li>1 rótulo raro por mês</li><li>Cartão de degustação</li></ul></div>
+        <div class="plano destaque"><span class="tag">Mais escolhido</span><h4>Reserva</h4>
+          <div class="garrafas"><svg viewBox="0 0 14 22"><path d="M5 0h4v5l2 3v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8l2-3z"/></svg><svg viewBox="0 0 14 22"><path d="M5 0h4v5l2 3v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8l2-3z"/></svg></div>
+          <div class="preco">R$ 990 <small>/mês</small></div>
+          <ul><li>2 rótulos raros por mês</li><li>Caixa dupla numerada</li><li>Frete grátis</li></ul></div>
+      </div>
+      <div class="fixo"><div class="btn ouro">Assinar o Reserva</div></div>
+      <div class="tabs">
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</div>
+        <div class="tab on"><svg viewBox="0 0 24 24"><path d="M8 2h8M9 2v5.5L6 12v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9l-3-4.5V2"/><path d="M6 14h12"/></svg>Clube</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Adega</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Conta</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Adega -->
+  <div class="tela"><span class="rotulo">4 · Adega (garrafas recebidas e fichas)</span>
+    <div class="fone"><div class="ilha"></div>
+      <div class="status"><span>9:41</span><span>●●●</span></div>
+      <div class="conteudo">
+        <div class="topo"><div><div class="eyebrow">Minha adega</div><h3>6 rótulos</h3></div></div>
+        <span class="chip on">Todos</span><span class="chip">Whisky</span><span class="chip">Rum</span><span class="chip">Gin</span>
+        <div class="grade-g">
+          <div class="gar"><div class="foto" style="background-image:url('hero-vaultierre.webp');background-position:62% 50%"></div><div class="t"><b>Weber Haus 48</b><small>Cachaça · Brasil</small><div class="estrelas">★★★★★</div></div></div>
+          <div class="gar"><div class="foto" style="background-image:url('entrega-dassai-diplomatico.webp');background-position:60% 50%"></div><div class="t"><b>Diplomático</b><small>Rum · Venezuela</small><div class="estrelas">★★★★☆</div></div></div>
+          <div class="gar"><div class="foto" style="background-image:url('entrega-monkey-clase-azul.webp');background-position:42% 50%"></div><div class="t"><b>Monkey 47</b><small>Gin · Alemanha</small><div class="estrelas">★★★★★</div></div></div>
+          <div class="gar"><div class="foto" style="background-image:url('entrega-dassai-diplomatico.webp');background-position:38% 50%"></div><div class="t"><b>Dassai 23</b><small>Saquê · Japão</small><div class="muted" style="font-size:10px;margin-top:3px">Avaliar →</div></div></div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M8 2h8M9 2v5.5L6 12v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9l-3-4.5V2"/><path d="M6 14h12"/></svg>Clube</div>
+        <div class="tab on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Adega</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Conta</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Conta -->
+  <div class="tela"><span class="rotulo">5 · Conta</span>
+    <div class="fone"><div class="ilha"></div>
+      <div class="status"><span>9:41</span><span>●●●</span></div>
+      <div class="conteudo">
+        <div class="perfil"><div class="av">G</div><div><b style="font-size:16px">Guilherme Faustino</b><div class="muted" style="font-size:11.5px">Membro desde nov/2026</div></div></div>
+        <div class="ass"><div class="linha-card"><span class="eyebrow">Assinatura ativa</span><span style="font-size:11px;color:var(--verde)">● Ativa</span></div>
+          <div class="serif" style="font-size:24px;margin:6px 0 2px">Reserva · mensal</div><div class="muted" style="font-size:11.5px">Próxima cobrança em 23/12 · R$ 990</div></div>
+        <div class="lista">
+          <div class="item"><svg class="ic" viewBox="0 0 24 24"><path d="M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>Indique e ganhe<span class="seta">›</span></div>
+          <div class="item"><svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Endereços<span class="seta">›</span></div>
+          <div class="item"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Pedidos<span class="seta">›</span></div>
+          <div class="item"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Segurança<span class="seta">›</span></div>
+          <div class="item"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg>Ajuda e contato<span class="seta">›</span></div>
+        </div>
+        <div class="muted" style="font-size:11px;text-align:center;margin-top:14px">Sair · Excluir conta</div>
+      </div>
+      <div class="tabs">
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><path d="M8 2h8M9 2v5.5L6 12v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9l-3-4.5V2"/><path d="M6 14h12"/></svg>Clube</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Adega</div>
+        <div class="tab on"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Conta</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="notas">
+  <div class="nota"><h3>Visual</h3><ul><li>Fundo escuro "adega" e ouro só em detalhes</li><li>Cormorant nos títulos, DM Sans no resto (fontes do site)</li><li>Ícones de traço fino; sem emojis</li><li>Fotos grandes das edições</li></ul></div>
+  <div class="nota"><h3>Navegação</h3><ul><li>4 abas: Início, Clube, Adega, Conta</li><li>Os dois planos visíveis juntos (hoje o Reserva fica escondido numa aba)</li><li>Login em uma tela: Apple, Google ou e-mail</li><li>Cadastro com 4 campos; CPF e celular só na compra</li></ul></div>
+  <div class="nota"><h3>Rápido</h3><ul><li>Imagens com cache (expo-image)</li><li>Listas virtualizadas, telas carregadas sob demanda</li><li>Vibração leve nos toques importantes</li><li>Tudo na SDK 54, sem upgrade</li></ul></div>
+  <div class="nota"><h3>Lojas (Apple e Google)</h3><ul><li>Entrar com Apple nativo no iPhone (obrigatório quando há Google)</li><li>Excluir conta dentro do app (obrigatório)</li><li>Classificação 18+ e aviso "beba com moderação"</li><li>Pagamento pelo site/Mercado Pago</li></ul></div>
+</section>
+</body>
+</html>
