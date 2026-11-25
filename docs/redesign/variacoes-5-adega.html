@@ -1,0 +1,137 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Adega (o que você já recebeu)</title><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style>
+  :root {
+    --noir: #0E0D0C; --surface: #171513; --surface2: #1F1C19; --linha: rgba(201,168,76,.16);
+    --marfim: #F3EEE4; --muted: #9C958A; --ouro: #C9A84C; --ouro2: #E2C06A; --verde: #6FBF8E;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #E9E5DE; font-family: 'DM Sans', sans-serif; color: var(--marfim); padding: 40px 24px 60px; }
+  header.doc { max-width: 1240px; margin: 0 auto 36px; color: #1B1A19; }
+  header.doc h1 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 44px; }
+  header.doc p { color: #555; max-width: 780px; line-height: 1.6; margin-top: 8px; }
+  .grade { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; max-width: 1700px; margin: 0 auto; }
+  .tela { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .rotulo { color: #1B1A19; font-weight: 600; font-size: 14px; letter-spacing: .5px; }
+  .fone { width: 300px; height: 640px; border-radius: 44px; background: var(--noir); position: relative; overflow: hidden;
+          box-shadow: 0 30px 60px rgba(0,0,0,.25), 0 0 0 10px #111, 0 0 0 11px #333; }
+  .status { height: 40px; display: flex; justify-content: space-between; align-items: center; padding: 0 26px; font-size: 12px; font-weight: 600; position: relative; z-index: 3; }
+  .ilha { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 90px; height: 26px; background: #000; border-radius: 20px; z-index: 4; }
+  .conteudo { padding: 0 18px 90px; height: calc(100% - 40px); overflow: hidden; }
+  .serif { font-family: 'Cormorant Garamond', serif; }
+  .eyebrow { font-size: 10px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--ouro); font-weight: 600; }
+  .muted { color: var(--muted); }
+  /* tab bar */
+  .tabs { position: absolute; left: 12px; right: 12px; bottom: 14px; height: 62px; border-radius: 22px; background: rgba(28,25,22,.78);
+          backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,.06); display: flex; justify-content: space-around; align-items: center; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9.5px; color: var(--muted); letter-spacing: .3px; }
+  .tab svg { width: 21px; height: 21px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+  .tab.on { color: var(--ouro2); }
+  .tab.on::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--ouro2); margin-top: -1px; }
+  .ic { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+  /* 1 boas-vindas */
+  .bv { position: absolute; inset: 0; background: url('hero-vaultierre.webp') center/cover; }
+  .bv::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,13,12,.15) 0%, rgba(14,13,12,.55) 40%, #0E0D0C 72%); }
+  .bv-txt { position: absolute; left: 24px; right: 24px; bottom: 34px; z-index: 2; }
+  .bv-txt img { width: 54px; margin-bottom: 18px; }
+  .bv-txt h2 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 34px; line-height: 1.05; }
+  .bv-txt h2 em { color: var(--ouro2); font-style: italic; }
+  .bv-txt p { font-size: 13px; color: #CFC8BC; margin: 12px 0 22px; line-height: 1.5; }
+  .btn { height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 14.5px; margin-bottom: 10px; }
+  .btn.branco { background: #fff; color: #000; }
+  .btn.contorno { border: 1px solid rgba(255,255,255,.22); color: var(--marfim); }
+  .btn.ouro { background: linear-gradient(135deg, var(--ouro2), var(--ouro) 55%, #9E7A2E); color: #15120D; }
+  .link { text-align: center; font-size: 13px; color: var(--ouro2); margin-top: 6px; }
+  .legal { text-align: center; font-size: 10px; color: #7E776C; margin-top: 14px; }
+  /* 2 inicio */
+  .topo { display: flex; justify-content: space-between; align-items: center; margin: 6px 0 18px; }
+  .topo h3 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 26px; line-height: 1; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--linha); display: grid; place-items: center; color: var(--ouro2); }
+  .edicao { height: 250px; border-radius: 22px; position: relative; overflow: hidden; background: url('entrega-dassai-diplomatico.webp') center/cover; }
+  .edicao::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(14,13,12,.92)); }
+  .edicao .info { position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2; }
+  .edicao h4 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 500; margin: 4px 0 8px; }
+  .contagem { display: flex; gap: 6px; }
+  .contagem span { background: rgba(255,255,255,.1); backdrop-filter: blur(8px); border-radius: 8px; padding: 5px 8px; font-size: 11px; font-weight: 600; }
+  .contagem b { color: var(--ouro2); }
+  .card { background: var(--surface); border: 1px solid var(--linha); border-radius: 18px; padding: 14px; margin-top: 12px; }
+  .passos { display: flex; align-items: center; margin-top: 10px; }
+  .passo { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 9.5px; color: var(--muted); flex: 0 0 auto; }
+  .bola { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #4A4540; }
+  .bola.ok { background: var(--ouro); border-color: var(--ouro); }
+  .trilho { flex: 1; height: 1.5px; background: #3A3631; margin: 0 4px 14px; }
+  .trilho.ok { background: var(--ouro); }
+  .linha-card { display: flex; justify-content: space-between; align-items: center; }
+  .quiz { display: flex; gap: 12px; align-items: center; }
+  .quiz .selo { width: 44px; height: 44px; border-radius: 12px; background: rgba(201,168,76,.12); display: grid; place-items: center; color: var(--ouro2); flex: 0 0 auto; }
+  /* 3 clube */
+  .seg { display: flex; background: var(--surface); border-radius: 12px; padding: 3px; margin: 4px 0 14px; border: 1px solid var(--linha); }
+  .seg span { flex: 1; text-align: center; font-size: 12px; padding: 8px 0; border-radius: 9px; color: var(--muted); font-weight: 600; }
+  .seg span.on { background: var(--surface2); color: var(--marfim); }
+  .seg small { color: var(--verde); font-weight: 600; }
+  .plano { border-radius: 20px; padding: 16px; border: 1px solid var(--linha); background: var(--surface); margin-bottom: 12px; position: relative; }
+  .plano.destaque { border-color: rgba(226,192,106,.55); background: linear-gradient(160deg, #241F18, #171513 60%); }
+  .plano .tag { position: absolute; top: 14px; right: 14px; font-size: 9.5px; letter-spacing: 1.4px; text-transform: uppercase; color: #15120D; background: var(--ouro2); padding: 4px 8px; border-radius: 20px; font-weight: 700; }
+  .plano h4 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 26px; }
+  .preco { font-size: 24px; font-weight: 600; margin: 6px 0 2px; }
+  .preco small { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .plano ul { list-style: none; margin-top: 10px; display: grid; gap: 6px; font-size: 12px; color: #CFC8BC; }
+  .plano li::before { content: '—'; color: var(--ouro); margin-right: 8px; }
+  .garrafas { display: flex; gap: 4px; margin-top: 4px; }
+  .garrafas svg { width: 14px; height: 22px; fill: var(--ouro); }
+  .fixo { position: absolute; left: 14px; right: 14px; bottom: 88px; }
+  /* 4 adega */
+  .grade-g { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .gar { background: var(--surface); border: 1px solid var(--linha); border-radius: 16px; overflow: hidden; }
+  .gar .foto { height: 120px; background-size: cover; background-position: center; }
+  .gar .t { padding: 9px 10px 11px; }
+  .gar b { font-size: 12.5px; font-weight: 600; display: block; }
+  .gar small { font-size: 10px; color: var(--muted); }
+  .estrelas { color: var(--ouro2); font-size: 10px; letter-spacing: 1px; margin-top: 3px; }
+  .chip { display: inline-block; border: 1px solid var(--linha); border-radius: 20px; padding: 5px 10px; font-size: 11px; color: var(--muted); margin: 0 4px 12px 0; }
+  .chip.on { border-color: var(--ouro); color: var(--ouro2); }
+  /* 5 conta */
+  .perfil { display: flex; gap: 12px; align-items: center; margin: 10px 0 16px; }
+  .perfil .av { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, #2A251E, #15120D); border: 1px solid var(--ouro); display: grid; place-items: center; font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--ouro2); }
+  .lista { background: var(--surface); border: 1px solid var(--linha); border-radius: 18px; margin-top: 12px; }
+  .item { display: flex; align-items: center; gap: 12px; padding: 13px 14px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .item:last-child { border-bottom: 0; }
+  .item .ic { color: var(--ouro2); }
+  .item .seta { margin-left: auto; color: #5A544C; }
+  .ass { background: linear-gradient(150deg, #2A2319, #171513 70%); border: 1px solid rgba(226,192,106,.4); border-radius: 18px; padding: 14px; }
+  .notas { max-width: 1240px; margin: 46px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; color: #1B1A19; }
+  .nota { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 0 rgba(0,0,0,.05); }
+  .nota h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .nota ul { padding-left: 18px; color: #444; font-size: 14px; line-height: 1.6; }
+
+  .grade { flex-wrap: nowrap; }
+  .tela .desc { width: 300px; color: #555; font-size: 13px; line-height: 1.45; text-align: center; min-height: 38px; }
+  .letra { display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:#1B1A19; color:#E2C06A; font-family:'Cormorant Garamond',serif; font-size:16px; margin-right:6px; }
+  .tabs.borda { left:0; right:0; bottom:0; height:78px; border-radius:0; padding-bottom:14px; background:rgba(18,16,14,.96); border:0; border-top:1px solid rgba(201,168,76,.14); }
+  .tabs.min .tab span { display:none; }
+  .tabs.min { height:56px; }
+  .tab span { display:block; }
+  .full { position:absolute; inset:0; background-size:cover; background-position:center; }
+  .grad { position:absolute; inset:0; background:linear-gradient(180deg, rgba(14,13,12,.1) 0%, rgba(14,13,12,.6) 45%, #0E0D0C 78%); }
+  .vidro { background:rgba(30,27,24,.55); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:14px; }
+  .dots { display:flex; gap:6px; justify-content:center; margin:10px 0 0; } .dots i { width:6px; height:6px; border-radius:3px; background:#4A4540; } .dots i.on { width:18px; background:var(--ouro2); }
+  .tile { background:var(--surface); border:1px solid var(--linha); border-radius:16px; padding:12px; height:96px; display:flex; flex-direction:column; justify-content:space-between; }
+  .tile b { font-size:13px; font-weight:600; } .tile .ic { color:var(--ouro2); }
+  .tabela { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+  .tabela th { font-family:'Cormorant Garamond',serif; font-weight:500; font-size:17px; text-align:center; padding:8px 4px; }
+  .tabela td { padding:9px 4px; border-top:1px solid rgba(255,255,255,.06); text-align:center; color:#CFC8BC; }
+  .tabela td:first-child { text-align:left; color:var(--muted); }
+  .tabela .col-d { background:rgba(201,168,76,.08); }
+  .ok { color:var(--ouro2); }
+  .rows .row { display:flex; gap:12px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.06); align-items:center; }
+  .rows .thumb { width:56px; height:56px; border-radius:12px; background-size:cover; background-position:center; flex:0 0 auto; }
+  .rows b { font-size:13.5px; font-weight:600; } .rows small { display:block; font-size:11px; color:var(--muted); margin-top:2px; }
+  .timeline { position:relative; padding-left:18px; margin-top:6px; } .timeline::before { content:''; position:absolute; left:4px; top:6px; bottom:6px; width:1.5px; background:#3A3631; }
+  .ev { position:relative; padding:8px 0 10px; font-size:12.5px; } .ev::before { content:''; position:absolute; left:-18px; top:12px; width:10px; height:10px; border-radius:50%; background:var(--ouro); }
+  .ev.fut::before { background:var(--noir); border:1.5px solid #5A544C; } .ev small { display:block; color:var(--muted); font-size:11px; }
+  .segl { display:flex; gap:18px; border-bottom:1px solid rgba(255,255,255,.08); margin:6px 0 14px; } .segl span { padding:8px 0; font-size:13px; color:var(--muted); } .segl span.on { color:var(--marfim); border-bottom:2px solid var(--ouro2); }
+  .grande { font-family:'Cormorant Garamond',serif; font-size:44px; line-height:1; }
+  .cartao { height:170px; border-radius:20px; padding:16px; background:linear-gradient(135deg,#2B241A 0%,#15120D 55%,#2B241A 100%); border:1px solid rgba(226,192,106,.45); position:relative; overflow:hidden; }
+  .cartao img { position:absolute; right:-24px; bottom:-24px; width:130px; opacity:.35; }
+  .secao { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin:16px 0 6px 4px; }
+  .ficha { background:#F3EEE4; color:#1B1A19; border-radius:14px; padding:12px; font-size:11.5px; line-height:1.45; }
+  .ficha b { font-family:'Cormorant Garamond',serif; font-size:18px; display:block; } .ficha i { color:#8a7550; font-style:normal; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; }
+</style></head><body><header class="doc"><h1>Adega (o que você já recebeu)</h1><p>Mesmo estilo da proposta (Noir: escuro, ouro e fotos grandes). Três formas de organizar a tela: escolha A, B ou C.</p></header><div class="grade"><div class="tela"><span class="rotulo"><span class="letra">A</span>Grade de garrafas</span><div class="fone"><div class="ilha"></div><div class="status"><span>9:41</span><span>●●●</span></div><div class="conteudo"><div class="topo"><div><div class="eyebrow">Minha adega</div><h3>6 rótulos</h3></div></div><span class="chip on">Todos</span><span class="chip">Whisky</span><span class="chip">Rum</span><span class="chip">Gin</span><div class="grade-g"><div class="gar"><div class="foto" style="background-image:url(hero-vaultierre.webp);background-position:62% 50%"></div><div class="t"><b>Weber Haus 48</b><small>Cachaça · Brasil</small><div class="estrelas">★★★★★</div></div></div><div class="gar"><div class="foto" style="background-image:url(entrega-dassai-diplomatico.webp);background-position:60% 50%"></div><div class="t"><b>Diplomático</b><small>Rum · Venezuela</small><div class="estrelas">★★★★☆</div></div></div><div class="gar"><div class="foto" style="background-image:url(entrega-monkey-clase-azul.webp);background-position:42% 50%"></div><div class="t"><b>Monkey 47</b><small>Gin · Alemanha</small><div class="estrelas">★★★★★</div></div></div><div class="gar"><div class="foto" style="background-image:url(entrega-dassai-diplomatico.webp);background-position:38% 50%"></div><div class="t"><b>Dassai 23</b><small>Saquê · Japão</small><div class="estrelas">Avaliar →</div></div></div></div></div><div class="tabs "><div class="tab"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Início</span></div><div class="tab"><svg viewBox="0 0 24 24"><path d="M8 2h8M9 2v5.5L6 12v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9l-3-4.5V2"/><path d="M6 14h12"/></svg><span>Clube</span></div><div class="tab on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Adega</span></div><div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M7 14h4"/></svg><span>Assinatura</span></div><div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Conta</span></div></div></div><div class="desc">Todas as garrafas recebidas em grade, com filtro e sua nota.</div></div><div class="tela"><span class="rotulo"><span class="letra">B</span>Lista com notas</span><div class="fone"><div class="ilha"></div><div class="status"><span>9:41</span><span>●●●</span></div><div class="conteudo"><div class="topo"><div><div class="eyebrow">Minha adega</div><h3>6 rótulos</h3></div></div><div class="rows"><div class="row"><div class="thumb" style="background-image:url(entrega-dassai-diplomatico.webp);background-position:60% 50%"></div><div><b>Diplomático Reserva</b><small>Rum · caramelo, cacau, café</small><div class="estrelas">★★★★☆</div></div></div><div class="row"><div class="thumb" style="background-image:url(entrega-monkey-clase-azul.webp);background-position:42% 50%"></div><div><b>Monkey 47</b><small>Gin · zimbro, cítricos, floresta</small><div class="estrelas">★★★★★</div></div></div><div class="row"><div class="thumb" style="background-image:url(hero-vaultierre.webp);background-position:62% 50%"></div><div><b>Weber Haus 48</b><small>Cachaça · baunilha, carvalho</small><div class="estrelas">★★★★★</div></div></div><div class="row"><div class="thumb" style="background-image:url(entrega-dassai-diplomatico.webp);background-position:38% 50%"></div><div><b>Dassai 23</b><small>Saquê · pera, melão, floral</small><div class="link" style="text-align:left;margin:2px 0 0;font-size:11px">Avaliar</div></div></div></div></div><div class="tabs borda"><div class="tab"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Início</span></div><div class="tab"><svg viewBox="0 0 24 24"><path d="M8 2h8M9 2v5.5L6 12v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9l-3-4.5V2"/><path d="M6 14h12"/></svg><span>Clube</span></div><div class="tab on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Adega</span></div><div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M7 14h4"/></svg><span>Assinatura</span></div><div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Conta</span></div></div></div><div class="desc">Uma garrafa por linha, com as notas de degustação.</div></div><div class="tela"><span class="rotulo"><span class="letra">C</span>Por edição + ficha</span><div class="fone"><div class="ilha"></div><div class="status"><span>9:41</span><span>●●●</span></div><div class="conteudo"><div class="topo"><div><div class="eyebrow">Minha adega</div><h3>Edição de novembro</h3></div></div><div style="height:160px;border-radius:18px;background:url(entrega-dassai-diplomatico.webp) center/cover"></div><div class="dots"><i></i><i class="on"></i><i></i></div><div class="ficha" style="margin-top:12px"><i>Ficha de degustação</i><b>Diplomático Reserva Exclusiva</b>Rum · Venezuela · 40%<br><br><b style="font-size:13px;font-family:DM Sans">Aroma</b>Frutas secas, caramelo, baunilha.<br><b style="font-size:13px;font-family:DM Sans">Harmoniza</b>Chocolate amargo e charuto.</div></div><div class="tabs min"><div class="tab"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Início</span></div><div class="tab"><svg viewBox="0 0 24 24"><path d="M8 2h8M9 2v5.5L6 12v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9l-3-4.5V2"/><path d="M6 14h12"/></svg><span>Clube</span></div><div class="tab on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Adega</span></div><div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M7 14h4"/></svg><span>Assinatura</span></div><div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Conta</span></div></div></div><div class="desc">Organizada por mês; cada edição abre a ficha de degustação digital.</div></div></div></body></html>
