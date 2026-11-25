@@ -37,7 +37,7 @@ export function useMinhaConta() {
 export function usePosts(limite = 6) {
   const [posts, setPosts] = useState([])
   useFocusEffect(useCallback(() => {
-    getPosts({ 'pagination[limit]': limite }).then(r => setPosts(r.data?.data || [])).catch(() => {})
+    getPosts({ 'pagination[limit]': limite }).then(r => setPosts(Array.isArray(r) ? r : [])).catch(() => {})
   }, [limite]))
   return posts
 }

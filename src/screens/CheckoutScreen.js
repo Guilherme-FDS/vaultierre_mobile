@@ -9,21 +9,7 @@ import { Tela, Cabecalho, Card, Eyebrow, Titulo, Muted, Botao, Entrada, Carregan
 import Icone from '../components/Icone'
 import { colors, fonts } from '../theme'
 
-const mascaraCpf = (v) => v.replace(/\D/g, '').slice(0, 11).replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-const mascaraTel = (v) => v.replace(/\D/g, '').slice(0, 11).replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2')
-export function cpfValido(v) {
-  const d = String(v).replace(/\D/g, '').split('').map(Number)
-  if (d.length !== 11 || new Set(d).size === 1) return false
-  for (const n of [9, 10]) {
-    const soma = d.slice(0, n).reduce((s, x, i) => s + x * (n + 1 - i), 0)
-    if ((soma * 10 % 11) % 10 !== d[n]) return false
-  }
-  return true
-}
-const erroApi = (e, padrao) => {
-  const d = e?.response?.data?.detail
-  return Array.isArray(d) ? d.map(x => String(x.msg || '').replace(/^Value error, /, '')).join('\n') : (typeof d === 'string' ? d : padrao)
-}
+import { mascaraCpf, mascaraTel, cpfValido, msgErro as erroApi } from '../utils/mascaras'
 
 export default function CheckoutScreen({ navigation, route }) {
   const { produtoId, planoId } = route.params || {}

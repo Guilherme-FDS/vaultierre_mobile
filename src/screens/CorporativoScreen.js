@@ -1,61 +1,78 @@
-import React from 'react'
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native'
-import { colors, spacing, radius, shadow } from '../theme'
+// Presentes corporativos: estimativa na hora e pedido de orçamento (mesmo fluxo do site).
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, Alert, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native'
+import { Image } from 'expo-image'
+import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
+import { moeda } from '../services/dados'
+import { msgErro } from '../utils/mascaras'
+import { Tela, Titulo, Muted, Eyebrow, Card, Botao, Entrada, toque } from '../components/ui'
+import { colors, fonts, IMAGENS } from '../theme'
 
-const BENEFICIOS = [
-  { titulo: 'Curadoria personalizada', texto: 'Seleção de rótulos alinhada à identidade da sua empresa.' },
-  { titulo: 'Box premium', texto: 'Embalagem exclusiva para presentear com estilo.' },
-  { titulo: 'Notas de degustação', texto: 'Material acompanha cada garrafa da seleção.' },
-  { titulo: 'Entrega coordenada', texto: 'Logística para grandes volumes e datas especiais.' },
-]
+export default function CorporativoScreen() {
+  const { user } = useAuth()
+  const [f, setF] = useState({ empresa: '', nome: user?.nome || '', email: user?.email || '', telefone: '', quantidade: '20', garrafas: 1 })
+  const [est, setEst] = useState(null)
+  const [enviando, setEnviando] = useState(false)
+  const muda = (k) => (v) => setF(x => ({ ...x, [k]: v }))
+  const qtd = parseInt(f.quantidade, 10) || 0
 
-export default function CorporativoScreen({ navigation }) {
+  useEffect(() => {
+    if (qtd < 10) { setEst(null); return }
+    const t = setTimeout(() => api.get('/leads/b2b/estimativa', { params: { quantidade: qtd, garrafas: f.garrafas } }).then(r => setEst(r.data)).catch(() => setEst(null)), 300)
+    return () => clearTimeout(t)
+  }, [qtd, f.garrafas])
+
+  async function enviar() {
+    if (!f.empresa.trim() || !f.nome.trim() || !f.email.trim()) return Alert.alert('Atenção', 'Preencha empresa, nome e e-mail.')
+    if (qtd < 10) return Alert.alert('Atenção', 'O pedido mínimo é de 10 kits.')
+    setEnviando(true)
+    try {
+      await api.post('/leads/b2b', { empresa: f.empresa.trim(), nome: f.nome.trim(), email: f.email.trim(), telefone: f.telefone || null, quantidade: qtd, garrafas: f.garrafas, origem: 'app' })
+      Alert.alert('Orçamento enviado', 'A curadoria entra em contato em até 1 dia útil.')
+    } catch (e) { Alert.alert('Ops', msgErro(e, 'Não foi possível enviar.')) } finally { setEnviando(false) }
+  }
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <Text style={styles.titulo}>Presentes Corporativos</Text>
-      <Text style={styles.sub}>
-        Surpreenda clientes, parceiros e colaboradores com uma experiência de bebidas premium.
-      </Text>
-
-      <View style={[styles.card, shadow.card]}>
-        <Text style={styles.cardTitulo}>A partir de R$ 438 por kit</Text>
-        <Text style={styles.cardTexto}>Conforme volume e personalização · pedido mínimo de 10 kits · kit avulso ou assinatura corporativa.</Text>
-      </View>
-
-      {BENEFICIOS.map((b) => (
-        <View key={b.titulo} style={[styles.card, shadow.card]}>
-          <Text style={styles.cardTitulo}>{b.titulo}</Text>
-          <Text style={styles.cardTexto}>{b.texto}</Text>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.fundo }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Tela abas={false} contentStyle={{ paddingHorizontal: 0 }}>
+        <Image source={IMAGENS.edicoes[2]} style={{ height: 200, width: '100%' }} contentFit="cover" />
+        <View style={{ paddingHorizontal: 18 }}>
+          <Eyebrow style={{ marginTop: 18 }}>Presentes corporativos</Eyebrow>
+          <Titulo tamanho={30}>Um presente que ninguém esquece</Titulo>
+          <Muted style={{ marginTop: 8, lineHeight: 20 }}>Kits de destilados raros para clientes e equipes, com caixa numerada e cartão de degustação. A partir de 10 kits.</Muted>
+          <Card destaque>
+            <Eyebrow>Simule</Eyebrow>
+            <View style={st.seg}>
+              {[1, 2].map(g => (
+                <TouchableOpacity key={g} onPress={() => { toque(); muda('garrafas')(g) }} style={[st.segI, f.garrafas === g && st.segOn]}>
+                  <Text style={[st.segT, f.garrafas === g && { color: colors.texto }]}>{g} garrafa{g > 1 ? 's' : ''} por kit</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Entrada rotulo="Quantidade de kits" value={f.quantidade} onChangeText={v => muda('quantidade')(v.replace(/\D/g, ''))} keyboardType="number-pad" />
+            {est ? (
+              <>
+                <View style={st.linha}><Muted>{moeda(est.preco_kit)} por kit</Muted><Titulo tamanho={26}>{moeda(est.total)}</Titulo></View>
+                <Muted style={{ fontSize: 11.5 }}>Estimativa · faixa {est.faixa}. A proposta final vem da curadoria.</Muted>
+              </>
+            ) : <Muted>Pedido mínimo de 10 kits.</Muted>}
+          </Card>
+          <Entrada rotulo="Empresa" value={f.empresa} onChangeText={muda('empresa')} />
+          <Entrada rotulo="Seu nome" value={f.nome} onChangeText={muda('nome')} />
+          <Entrada rotulo="E-mail" value={f.email} onChangeText={muda('email')} autoCapitalize="none" keyboardType="email-address" />
+          <Entrada rotulo="WhatsApp (opcional)" value={f.telefone} onChangeText={muda('telefone')} keyboardType="phone-pad" />
+          <Botao titulo="Pedir orçamento" onPress={enviar} carregando={enviando} />
         </View>
-      ))}
-
-      <TouchableOpacity
-        style={styles.ctaWhats}
-        onPress={() => Linking.openURL('https://api.whatsapp.com/send/?phone=5544998969986')}
-      >
-        <Text style={styles.ctaWhatsTexto}>Falar no WhatsApp</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Contato')} style={{ marginTop: spacing.sm, alignItems: 'center' }}>
-        <Text style={styles.linkDourado}>Ou envie uma mensagem →</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </Tela>
+    </KeyboardAvoidingView>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.fundo },
-  titulo: { color: colors.texto, fontSize: 26, fontWeight: '700' },
-  sub: { color: colors.textoSecundario, fontSize: 14, lineHeight: 21, marginTop: 6, marginBottom: spacing.md },
-  card: {
-    backgroundColor: colors.fundoSecundario, borderRadius: radius.md, padding: spacing.md,
-    borderWidth: 1, borderColor: colors.bordaCard, marginBottom: spacing.sm,
-  },
-  cardTitulo: { color: colors.texto, fontSize: 15, fontWeight: '700' },
-  cardTexto: { color: colors.textoSecundario, fontSize: 13, marginTop: 4, lineHeight: 20 },
-  ctaWhats: {
-    backgroundColor: '#25D366', borderRadius: radius.pill, paddingVertical: 15,
-    alignItems: 'center', marginTop: spacing.md,
-  },
-  ctaWhatsTexto: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
-  linkDourado: { color: colors.dourado, fontWeight: '700', fontSize: 14 },
+const st = StyleSheet.create({
+  seg: { flexDirection: 'row', backgroundColor: colors.fundo, borderRadius: 12, padding: 3, marginVertical: 12 },
+  segI: { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
+  segOn: { backgroundColor: colors.superficie2 },
+  segT: { color: colors.textoSecundario, fontFamily: fonts.uiForte, fontSize: 12 },
+  linha: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 })

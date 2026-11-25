@@ -70,6 +70,7 @@ export default function ContaScreen({ navigation }) {
 
       <Secao>Suporte</Secao>
       <Lista>
+        <ItemLista icone="livro" titulo="Sobre o clube" onPress={() => abrir('Sobre')} />
         <ItemLista icone="ajuda" titulo="Perguntas frequentes" onPress={() => abrir('FAQ')} />
         <ItemLista icone="mensagem" titulo="Ajuda e contato" onPress={() => abrir('Contato')} />
         <ItemLista icone="caixa" titulo="Envio e devoluções" onPress={() => abrir('EnvioDevolucoes')} />

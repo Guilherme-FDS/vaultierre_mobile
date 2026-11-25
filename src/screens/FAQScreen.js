@@ -1,67 +1,42 @@
+// Perguntas frequentes (conteúdo do CMS, o mesmo do site).
 import React, { useEffect, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
-import { colors, spacing, radius, shadow } from '../theme'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { getFaqs } from '../services/strapi'
+import { extrairTextoStrapi } from '../utils/extrairTextoStrapi'
+import { Tela, Cabecalho, Muted, Carregando, toque } from '../components/ui'
+import { colors, fonts } from '../theme'
 
-export default function FAQScreen() {
-  const [faqs, setFaqs] = useState([])
-  const [carregando, setCarregando] = useState(true)
+const resposta = (r) => Array.isArray(r) ? r.map(b => extrairTextoStrapi(b.children)).filter(Boolean).join('\n\n') : (r || '')
+
+export default function FAQScreen({ navigation }) {
+  const [faqs, setFaqs] = useState(null)
   const [aberto, setAberto] = useState(null)
-
-  useEffect(() => {
-    getFaqs()
-      .then((data) => setFaqs(data || []))
-      .catch(() => {})
-      .finally(() => setCarregando(false))
-  }, [])
-
-  if (carregando) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={colors.dourado} />
-      </View>
-    )
-  }
-
+  useEffect(() => { getFaqs().then(d => setFaqs(d || [])).catch(() => setFaqs([])) }, [])
+  if (!faqs) return <Carregando />
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <Text style={styles.titulo}>Perguntas frequentes</Text>
-      {faqs.length === 0 ? (
-        <Text style={styles.textoVazio}>Nenhuma pergunta cadastrada ainda.</Text>
-      ) : (
-        faqs.map((faq, i) => {
-          const expandido = aberto === i
-          return (
-            <TouchableOpacity
-              key={faq.id ?? i}
-              style={[styles.card, shadow.card]}
-              onPress={() => setAberto(expandido ? null : i)}
-              activeOpacity={0.85}
-            >
-              <View style={styles.perguntaRow}>
-                <Text style={styles.pergunta}>{faq.pergunta}</Text>
-                <Text style={styles.seta}>{expandido ? '−' : '+'}</Text>
-              </View>
-              {expandido && <Text style={styles.resposta}>{faq.resposta}</Text>}
-            </TouchableOpacity>
-          )
-        })
-      )}
-    </ScrollView>
+    <Tela abas={false}>
+      <Cabecalho eyebrow="Ajuda" titulo="Perguntas frequentes" />
+      {!faqs.length ? <Muted>Nenhuma pergunta cadastrada ainda.</Muted> : faqs.map((f, i) => {
+        const ab = aberto === i
+        return (
+          <TouchableOpacity key={f.id ?? i} activeOpacity={0.8} onPress={() => { toque(); setAberto(ab ? null : i) }} style={st.item}>
+            <View style={st.linha}><Text style={st.pergunta}>{f.pergunta}</Text><Text style={st.mais}>{ab ? '−' : '+'}</Text></View>
+            {ab ? <Text style={st.resposta}>{resposta(f.resposta)}</Text> : null}
+          </TouchableOpacity>
+        )
+      })}
+      <TouchableOpacity onPress={() => navigation.navigate('Contato')} style={{ marginTop: 22 }}>
+        <Text style={st.link}>Não achou? Fale com a gente</Text>
+      </TouchableOpacity>
+    </Tela>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.fundo },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.fundo },
-  titulo: { color: colors.texto, fontSize: 26, fontWeight: '700', marginBottom: spacing.md },
-  textoVazio: { color: colors.textoSecundario, fontSize: 14 },
-  card: {
-    backgroundColor: colors.fundoSecundario, borderRadius: radius.md, padding: spacing.md,
-    borderWidth: 1, borderColor: colors.bordaCard, marginBottom: spacing.sm,
-  },
-  perguntaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  pergunta: { color: colors.texto, fontSize: 15, fontWeight: '600', flex: 1, marginRight: spacing.sm },
-  seta: { color: colors.dourado, fontSize: 18, fontWeight: '700' },
-  resposta: { color: colors.textoSecundario, fontSize: 14, lineHeight: 21, marginTop: spacing.sm },
+const st = StyleSheet.create({
+  item: { paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.linhaSutil },
+  linha: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
+  pergunta: { color: colors.texto, fontFamily: fonts.uiMedio, fontSize: 15, flex: 1, lineHeight: 21 },
+  mais: { color: colors.douradoClaro, fontSize: 20, lineHeight: 21 },
+  resposta: { color: colors.textoSecundario, fontFamily: fonts.ui, fontSize: 14, lineHeight: 21, marginTop: 10 },
+  link: { color: colors.douradoClaro, fontFamily: fonts.uiMedio, textAlign: 'center' },
 })

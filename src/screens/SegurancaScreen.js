@@ -1,95 +1,42 @@
+// Segurança: trocar a senha.
 import React, { useState } from 'react'
-import { View, Text, TextInput, ScrollView, StyleSheet, Alert } from 'react-native'
-import { colors, spacing, radius, shadow } from '../theme'
-import BotaoDourado from '../components/BotaoDourado'
-import Campo from '../components/Campo'
+import { Alert, KeyboardAvoidingView, Platform } from 'react-native'
 import api from '../services/api'
 import { validarSenha } from '../utils/validarSenha'
+import { msgErro } from '../utils/mascaras'
+import { Tela, Cabecalho, Botao, Entrada, Muted } from '../components/ui'
+import { colors } from '../theme'
 
 export default function SegurancaScreen() {
-  const [senhaAtual, setSenhaAtual] = useState('')
-  const [novaSenha, setNovaSenha] = useState('')
-  const [confirmarSenha, setConfirmarSenha] = useState('')
+  const [atual, setAtual] = useState('')
+  const [nova, setNova] = useState('')
+  const [conf, setConf] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const erroNova = nova ? validarSenha(nova) : null
 
-  const erroNovaSenha = novaSenha ? validarSenha(novaSenha) : null
-
-  async function trocarSenha() {
-    if (!senhaAtual || !novaSenha || !confirmarSenha) {
-      Alert.alert('Atenção', 'Preencha todos os campos.')
-      return
-    }
-    if (erroNovaSenha) {
-      Alert.alert('Atenção', erroNovaSenha)
-      return
-    }
-    if (novaSenha !== confirmarSenha) {
-      Alert.alert('Atenção', 'As senhas não coincidem.')
-      return
-    }
+  async function trocar() {
+    if (!atual || !nova || !conf) return Alert.alert('Atenção', 'Preencha todos os campos.')
+    if (erroNova) return Alert.alert('Atenção', erroNova)
+    if (nova !== conf) return Alert.alert('Atenção', 'As senhas não coincidem.')
     setSalvando(true)
     try {
-      await api.put('/configuracoes/senha', { senha_atual: senhaAtual, nova_senha: novaSenha })
-      Alert.alert('Sucesso', 'Senha alterada com sucesso!')
-      setSenhaAtual('')
-      setNovaSenha('')
-      setConfirmarSenha('')
-    } catch (e) {
-      const detail = e?.response?.data?.detail
-      Alert.alert('Erro', String(detail || 'Não foi possível alterar a senha.'))
-    } finally {
-      setSalvando(false)
-    }
+      await api.put('/configuracoes/senha', { senha_atual: atual, nova_senha: nova })
+      Alert.alert('Pronto', 'Senha alterada.')
+      setAtual(''); setNova(''); setConf('')
+    } catch (e) { Alert.alert('Ops', msgErro(e, 'Não foi possível alterar a senha.')) } finally { setSalvando(false) }
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <View style={[styles.card, shadow.forte]}>
-        <Campo label="Senha atual">
-          <TextInput
-            style={styles.input}
-            value={senhaAtual}
-            onChangeText={setSenhaAtual}
-            secureTextEntry
-            placeholderTextColor={colors.textoTerciario}
-          />
-        </Campo>
-        <Campo label="Nova senha">
-          <TextInput
-            style={styles.input}
-            value={novaSenha}
-            onChangeText={setNovaSenha}
-            secureTextEntry
-            placeholder="8+ caracteres, com maiúscula, minúscula e número"
-            placeholderTextColor={colors.textoTerciario}
-          />
-          {erroNovaSenha ? <Text style={styles.erroCampo}>{erroNovaSenha}</Text> : null}
-        </Campo>
-        <Campo label="Confirmar nova senha">
-          <TextInput
-            style={styles.input}
-            value={confirmarSenha}
-            onChangeText={setConfirmarSenha}
-            secureTextEntry
-            placeholderTextColor={colors.textoTerciario}
-          />
-        </Campo>
-        <BotaoDourado title="Alterar senha" onPress={trocarSenha} loading={salvando} style={{ marginTop: spacing.md }} />
-      </View>
-    </ScrollView>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.fundo }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Tela abas={false}>
+        <Cabecalho eyebrow="Conta" titulo="Segurança" />
+        <Muted style={{ marginTop: -8, marginBottom: 18, lineHeight: 19 }}>Se você entra com Google ou Apple, não precisa de senha.</Muted>
+        <Entrada rotulo="Senha atual" value={atual} onChangeText={setAtual} secureTextEntry textContentType="password" />
+        <Entrada rotulo="Nova senha" value={nova} onChangeText={setNova} secureTextEntry textContentType="newPassword" />
+        {erroNova ? <Muted style={{ color: colors.erro, marginTop: -8, marginBottom: 10 }}>{erroNova}</Muted> : null}
+        <Entrada rotulo="Confirmar nova senha" value={conf} onChangeText={setConf} secureTextEntry textContentType="newPassword" />
+        <Botao titulo="Alterar senha" onPress={trocar} carregando={salvando} style={{ marginTop: 8 }} />
+      </Tela>
+    </KeyboardAvoidingView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.fundo },
-  card: {
-    backgroundColor: colors.fundoSecundario, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.bordaCard, padding: spacing.lg,
-  },
-  input: {
-    backgroundColor: colors.fundoCard, color: colors.texto, borderRadius: radius.md,
-    paddingHorizontal: spacing.md, paddingVertical: 13, fontSize: 15,
-    borderWidth: 1, borderColor: colors.bordaCard,
-  },
-  erroCampo: { color: colors.erro, fontSize: 12, marginTop: 6 },
-})

@@ -1,39 +1,21 @@
+// Post do blog.
 import React, { useEffect, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native'
-import { colors, spacing } from '../theme'
+import { Image } from 'expo-image'
 import ConteudoStrapi from '../components/ConteudoStrapi'
 import { getPost } from '../services/strapi'
+import { capaDo } from './BlogScreen'
+import { Tela, Titulo, Carregando } from '../components/ui'
 
 export default function BlogPostScreen({ route }) {
-  const { slug, titulo } = route.params || {}
-  const [post, setPost] = useState(null)
-  const [carregando, setCarregando] = useState(true)
-
-  useEffect(() => {
-    getPost(slug)
-      .then((data) => setPost(data?.[0] || null))
-      .catch(() => {})
-      .finally(() => setCarregando(false))
-  }, [slug])
-
-  if (carregando) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={colors.dourado} />
-      </View>
-    )
-  }
-
+  const { slug, titulo, i = 0 } = route.params || {}
+  const [post, setPost] = useState(undefined)
+  useEffect(() => { getPost(slug).then(d => setPost(d?.[0] || null)).catch(() => setPost(null)) }, [slug])
+  if (post === undefined) return <Carregando />
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <Text style={styles.titulo}>{post?.titulo || titulo}</Text>
+    <Tela abas={false} contentStyle={{ paddingHorizontal: 0 }}>
+      <Image source={capaDo(post, i)} style={{ height: 230, width: '100%' }} contentFit="cover" />
+      <Titulo tamanho={30} style={{ marginTop: 18, marginBottom: 10, paddingHorizontal: 18 }}>{post?.titulo || titulo}</Titulo>
       <ConteudoStrapi blocos={post?.conteudo} />
-    </ScrollView>
+    </Tela>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.fundo },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.fundo },
-  titulo: { color: colors.texto, fontSize: 24, fontWeight: '700', marginBottom: spacing.md },
-})

@@ -1,67 +1,40 @@
+// Blog: histórias de destilarias e guias (conteúdo do CMS).
 import React, { useEffect, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
-import { colors, spacing, radius, shadow } from '../theme'
-import { getPosts } from '../services/strapi'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { Image } from 'expo-image'
+import { getPosts, STRAPI_URL } from '../services/strapi'
+import { Tela, Cabecalho, Muted, Eyebrow, Carregando, toque } from '../components/ui'
+import { colors, fonts, IMAGENS } from '../theme'
 
-function formatarData(str) {
-  if (!str) return ''
-  return new Date(str).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+const data = (s) => s ? new Date(s).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : ''
+export const capaDo = (p, i = 0) => {
+  const url = p?.capa?.url || p?.capa?.data?.attributes?.url
+  return url ? { uri: url.startsWith('http') ? url : `${STRAPI_URL}${url}` } : IMAGENS.edicoes[i % IMAGENS.edicoes.length]
 }
 
 export default function BlogScreen({ navigation }) {
-  const [posts, setPosts] = useState([])
-  const [carregando, setCarregando] = useState(true)
-
-  useEffect(() => {
-    getPosts()
-      .then((data) => setPosts(data || []))
-      .catch(() => {})
-      .finally(() => setCarregando(false))
-  }, [])
-
-  if (carregando) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={colors.dourado} />
-      </View>
-    )
-  }
-
+  const [posts, setPosts] = useState(null)
+  useEffect(() => { getPosts().then(d => setPosts(d || [])).catch(() => setPosts([])) }, [])
+  if (!posts) return <Carregando />
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <Text style={styles.titulo}>Blog</Text>
-      {posts.length === 0 ? (
-        <Text style={styles.textoVazio}>Nenhum post publicado ainda.</Text>
-      ) : (
-        posts.map((post) => (
-          <TouchableOpacity
-            key={post.id}
-            style={[styles.card, shadow.card]}
-            onPress={() => navigation.navigate('BlogPost', { slug: post.slug, titulo: post.titulo })}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.data}>{formatarData(post.publicado_em || post.createdAt)}</Text>
-            <Text style={styles.postTitulo}>{post.titulo}</Text>
-            <Text style={styles.resumo} numberOfLines={3}>{post.resumo}</Text>
-            <Text style={styles.linkDourado}>Ler mais →</Text>
-          </TouchableOpacity>
-        ))
-      )}
-    </ScrollView>
+    <Tela abas={false}>
+      <Cabecalho eyebrow="Blog" titulo="O que está por trás do copo" />
+      {!posts.length ? <Muted>Nenhum post publicado ainda.</Muted> : posts.map((p, i) => (
+        <TouchableOpacity key={p.id} activeOpacity={0.85} style={st.card} onPress={() => { toque(); navigation.navigate('BlogPost', { slug: p.slug, titulo: p.titulo, i }) }}>
+          <Image source={capaDo(p, i)} style={st.capa} contentFit="cover" transition={200} />
+          <View style={{ padding: 14 }}>
+            <Eyebrow>{data(p.publicado_em || p.createdAt)}</Eyebrow>
+            <Text style={st.titulo}>{p.titulo}</Text>
+            {p.resumo ? <Muted numberOfLines={2} style={{ marginTop: 6, lineHeight: 19 }}>{p.resumo}</Muted> : null}
+          </View>
+        </TouchableOpacity>
+      ))}
+    </Tela>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.fundo },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.fundo },
-  titulo: { color: colors.texto, fontSize: 26, fontWeight: '700', marginBottom: spacing.md },
-  textoVazio: { color: colors.textoSecundario, fontSize: 14 },
-  card: {
-    backgroundColor: colors.fundoSecundario, borderRadius: radius.md, padding: spacing.md,
-    borderWidth: 1, borderColor: colors.bordaCard, marginBottom: spacing.sm,
-  },
-  data: { color: colors.textoTerciario, fontSize: 12 },
-  postTitulo: { color: colors.texto, fontSize: 17, fontWeight: '700', marginTop: 4 },
-  resumo: { color: colors.textoSecundario, fontSize: 14, lineHeight: 20, marginTop: 6 },
-  linkDourado: { color: colors.dourado, fontWeight: '700', fontSize: 13, marginTop: spacing.sm },
+const st = StyleSheet.create({
+  card: { backgroundColor: colors.fundoSecundario, borderRadius: 18, borderWidth: 1, borderColor: colors.bordaCard, overflow: 'hidden', marginBottom: 14 },
+  capa: { height: 160, width: '100%' },
+  titulo: { color: colors.texto, fontFamily: fonts.serif, fontSize: 22, lineHeight: 25, marginTop: 4 },
 })

@@ -7,22 +7,7 @@ import { validarSenha } from '../utils/validarSenha'
 import { Tela, Titulo, Muted, Eyebrow, Botao, Entrada } from '../components/ui'
 import { colors, fonts } from '../theme'
 
-const mascaraData = (v) => v.replace(/\D/g, '').slice(0, 8).replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2})(\d)/, '$1/$2')
-function dataIso(br) {
-  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(br)
-  if (!m) return null
-  const d = new Date(`${m[3]}-${m[2]}-${m[1]}T12:00:00`)
-  return isNaN(d) || d.getDate() !== Number(m[1]) ? null : `${m[3]}-${m[2]}-${m[1]}`
-}
-function idade(iso) {
-  const n = new Date(iso + 'T12:00:00'), h = new Date()
-  return h.getFullYear() - n.getFullYear() - ((h.getMonth() < n.getMonth() || (h.getMonth() === n.getMonth() && h.getDate() < n.getDate())) ? 1 : 0)
-}
-const msgErro = (e, padrao) => {
-  const d = e?.response?.data?.detail
-  if (Array.isArray(d)) return d.map(x => String(x.msg || '').replace(/^Value error, /, '')).join('\n')
-  return typeof d === 'string' ? d : padrao
-}
+import { mascaraData, dataIso, idade, msgErro } from '../utils/mascaras'
 
 export default function EmailLoginScreen({ navigation, route }) {
   const { login, cadastro } = useAuth()

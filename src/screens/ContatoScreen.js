@@ -1,110 +1,63 @@
+// Ajuda e contato: WhatsApp, e-mail e formulário (vai para o e-mail da Vaultierre pelo servidor).
 import React, { useState } from 'react'
-import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-native'
-import { colors, spacing, radius, shadow } from '../theme'
-import BotaoDourado from '../components/BotaoDourado'
-import Campo from '../components/Campo'
-import { BRAND_NAME, CONTATO_EMAIL } from '../config'
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking, KeyboardAvoidingView, Platform } from 'react-native'
+import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
+import { msgErro } from '../utils/mascaras'
+import { Tela, Cabecalho, Botao, Entrada, Lista, ItemLista, Secao, toque } from '../components/ui'
+import { colors, fonts } from '../theme'
+import { CONTATO_EMAIL } from '../config'
 
-const ASSUNTOS = ['Dúvida sobre assinatura', 'Problema com pedido', 'Parceria corporativa', 'Imprensa', 'Outro']
+const ASSUNTOS = ['Minha assinatura', 'Entrega', 'Pagamento', 'Corporativo', 'Outro']
 
 export default function ContatoScreen() {
-  const [nome, setNome] = useState('')
-  const [email, setEmail] = useState('')
+  const { user } = useAuth()
+  const [nome, setNome] = useState(user ? `${user.nome || ''} ${user.sobrenome || ''}`.trim() : '')
+  const [email, setEmail] = useState(user?.email || '')
   const [assunto, setAssunto] = useState(ASSUNTOS[0])
-  const [mensagem, setMensagem] = useState('')
+  const [msg, setMsg] = useState('')
+  const [enviando, setEnviando] = useState(false)
 
-  function enviar() {
-    if (!nome || !email || !mensagem) {
-      Alert.alert('Atenção', 'Preencha nome, email e mensagem.')
-      return
-    }
-    const subject = encodeURIComponent(`[${BRAND_NAME}] ${assunto}`)
-    const body = encodeURIComponent(`Nome: ${nome}\nEmail: ${email}\nAssunto: ${assunto}\n\n${mensagem}`)
-    Linking.openURL(`mailto:${CONTATO_EMAIL}?subject=${subject}&body=${body}`)
+  async function enviar() {
+    if (!nome.trim() || !email.trim() || !msg.trim()) return Alert.alert('Atenção', 'Preencha nome, e-mail e mensagem.')
+    setEnviando(true)
+    try {
+      await api.post('/contato', { nome: nome.trim(), email: email.trim(), assunto, mensagem: msg.trim() })
+      setMsg('')
+      Alert.alert('Mensagem enviada', 'Respondemos em até 1 dia útil no seu e-mail.')
+    } catch (e) { Alert.alert('Ops', msgErro(e, 'Não foi possível enviar agora.')) } finally { setEnviando(false) }
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
-      <Text style={styles.titulo}>Fale com a gente</Text>
-
-      <TouchableOpacity
-        style={[styles.canalCard, shadow.card]}
-        onPress={() => Linking.openURL('https://api.whatsapp.com/send/?phone=5544998969986')}
-      >
-        <Text style={styles.canalTitulo}>WhatsApp</Text>
-        <Text style={styles.canalSub}>Resposta rápida</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.canalCard, shadow.card]}
-        onPress={() => Linking.openURL(`mailto:${CONTATO_EMAIL}`)}
-      >
-        <Text style={styles.canalTitulo}>E-mail</Text>
-        <Text style={styles.canalSub}>{CONTATO_EMAIL}</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.secao}>Ou envie uma mensagem</Text>
-      <View style={[styles.card, shadow.forte]}>
-        <Campo label="Nome">
-          <TextInput style={styles.input} value={nome} onChangeText={setNome} placeholderTextColor={colors.textoTerciario} />
-        </Campo>
-        <Campo label="E-mail">
-          <TextInput style={styles.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholderTextColor={colors.textoTerciario} />
-        </Campo>
-        <Campo label="Assunto">
-          <View style={styles.assuntoWrap}>
-            {ASSUNTOS.map((a) => (
-              <TouchableOpacity
-                key={a}
-                style={[styles.assuntoChip, assunto === a && styles.assuntoChipAtivo]}
-                onPress={() => setAssunto(a)}
-              >
-                <Text style={[styles.assuntoTexto, assunto === a && styles.assuntoTextoAtivo]}>{a}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Campo>
-        <Campo label="Mensagem">
-          <TextInput
-            style={[styles.input, styles.inputMultilinha]}
-            value={mensagem}
-            onChangeText={setMensagem}
-            multiline
-            numberOfLines={4}
-            placeholderTextColor={colors.textoTerciario}
-          />
-        </Campo>
-        <BotaoDourado title="Enviar" onPress={enviar} style={{ marginTop: spacing.sm }} />
-      </View>
-    </ScrollView>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.fundo }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Tela abas={false}>
+        <Cabecalho eyebrow="Ajuda" titulo="Fale com a gente" />
+        <Lista>
+          <ItemLista icone="mensagem" titulo="WhatsApp" detalhe="Resposta rápida" onPress={() => Linking.openURL('https://api.whatsapp.com/send/?phone=5544998969986')} />
+          <ItemLista icone="documento" titulo="E-mail" detalhe={CONTATO_EMAIL} onPress={() => Linking.openURL(`mailto:${CONTATO_EMAIL}`)} ultimo />
+        </Lista>
+        <Secao>Ou envie uma mensagem</Secao>
+        <Entrada rotulo="Nome" value={nome} onChangeText={setNome} />
+        <Entrada rotulo="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+        <Text style={st.rotulo}>Assunto</Text>
+        <View style={st.chips}>
+          {ASSUNTOS.map(a => (
+            <TouchableOpacity key={a} onPress={() => { toque(); setAssunto(a) }} style={[st.chip, assunto === a && st.chipOn]}>
+              <Text style={[st.chipT, assunto === a && { color: colors.douradoClaro }]}>{a}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <Entrada rotulo="Mensagem" value={msg} onChangeText={setMsg} multiline style={{ height: 120, paddingTop: 12, textAlignVertical: 'top' }} />
+        <Botao titulo="Enviar mensagem" onPress={enviar} carregando={enviando} />
+      </Tela>
+    </KeyboardAvoidingView>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.fundo },
-  titulo: { color: colors.texto, fontSize: 26, fontWeight: '700', marginBottom: spacing.md },
-  canalCard: {
-    backgroundColor: colors.fundoSecundario, borderRadius: radius.md, padding: spacing.md,
-    borderWidth: 1, borderColor: colors.bordaCard, marginBottom: spacing.sm,
-  },
-  canalTitulo: { color: colors.texto, fontSize: 15, fontWeight: '700' },
-  canalSub: { color: colors.textoSecundario, fontSize: 13, marginTop: 2 },
-  secao: { color: colors.texto, fontSize: 18, fontWeight: '700', marginTop: spacing.md, marginBottom: spacing.sm },
-  card: {
-    backgroundColor: colors.fundoSecundario, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.bordaCard, padding: spacing.lg,
-  },
-  input: {
-    backgroundColor: colors.fundoCard, color: colors.texto, borderRadius: radius.md,
-    paddingHorizontal: spacing.md, paddingVertical: 13, fontSize: 15,
-    borderWidth: 1, borderColor: colors.bordaCard,
-  },
-  inputMultilinha: { minHeight: 90, textAlignVertical: 'top' },
-  assuntoWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  assuntoChip: {
-    borderRadius: radius.pill, borderWidth: 1, borderColor: colors.bordaCard,
-    paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.fundoCard,
-  },
-  assuntoChipAtivo: { backgroundColor: colors.dourado, borderColor: colors.dourado },
-  assuntoTexto: { color: colors.textoSecundario, fontSize: 12, fontWeight: '600' },
-  assuntoTextoAtivo: { color: '#1b1a19' },
+const st = StyleSheet.create({
+  rotulo: { color: colors.textoSecundario, fontFamily: fonts.uiForte, fontSize: 12, marginBottom: 8 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  chip: { borderWidth: 1, borderColor: colors.bordaCard, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
+  chipOn: { borderColor: colors.dourado },
+  chipT: { color: colors.textoSecundario, fontFamily: fonts.uiMedio, fontSize: 12.5 },
 })

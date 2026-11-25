@@ -24,7 +24,6 @@ import LoginScreen from './src/screens/LoginScreen'
 import EmailLoginScreen from './src/screens/EmailLoginScreen'
 import CheckoutScreen from './src/screens/CheckoutScreen'
 import IndiqueScreen from './src/screens/IndiqueScreen'
-import CarrinhoScreen from './src/screens/CarrinhoScreen'
 import EnderecoFormScreen from './src/screens/EnderecoFormScreen'
 import EditarPerfilScreen from './src/screens/EditarPerfilScreen'
 import EnderecosScreen from './src/screens/EnderecosScreen'
@@ -72,7 +71,7 @@ const cabecalho = {
 function Tabs() {
   return (
     <Tab.Navigator tabBar={(p) => <TabBar {...p} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.fundo } }}>
-      <Tab.Screen name="Inicio" component={InicioScreen} options={{ title: 'Início' }} />
+      <Tab.Screen name="Inicio" component={InicioScreen} options={{ title: '' }} />
       <Tab.Screen name="Clube" component={ClubeScreen} />
       <Tab.Screen name="Adega" component={AdegaScreen} />
       <Tab.Screen name="Assinatura" component={AssinaturaScreen} />
@@ -116,20 +115,19 @@ export default function App() {
                 <Stack.Screen name="EmailLogin" component={EmailLoginScreen} options={{ title: '' }} />
                 <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: '' }} />
                 <Stack.Screen name="Indique" component={IndiqueScreen} options={{ title: '' }} />
-                <Stack.Screen name="Carrinho" component={CarrinhoScreen} options={{ title: 'Carrinho' }} />
-                <Stack.Screen name="EnderecoForm" component={EnderecoFormScreen} options={{ title: 'Endereço', presentation: 'modal' }} />
-                <Stack.Screen name="EditarPerfil" component={EditarPerfilScreen} options={{ title: 'Meus dados' }} />
-                <Stack.Screen name="Enderecos" component={EnderecosScreen} options={{ title: 'Endereços' }} />
-                <Stack.Screen name="Seguranca" component={SegurancaScreen} options={{ title: 'Segurança' }} />
-                <Stack.Screen name="MeusPedidos" component={MeusPedidosScreen} options={{ title: 'Pedidos' }} />
-                <Stack.Screen name="Sobre" component={SobreScreen} options={{ title: 'Sobre' }} />
-                <Stack.Screen name="FAQ" component={FAQScreen} options={{ title: 'Perguntas frequentes' }} />
-                <Stack.Screen name="Blog" component={BlogScreen} options={{ title: 'Blog' }} />
+                <Stack.Screen name="EnderecoForm" component={EnderecoFormScreen} options={{ title: '', presentation: 'modal' }} />
+                <Stack.Screen name="EditarPerfil" component={EditarPerfilScreen} options={{ title: '' }} />
+                <Stack.Screen name="Enderecos" component={EnderecosScreen} options={{ title: '' }} />
+                <Stack.Screen name="Seguranca" component={SegurancaScreen} options={{ title: '' }} />
+                <Stack.Screen name="MeusPedidos" component={MeusPedidosScreen} options={{ title: '' }} />
+                <Stack.Screen name="Sobre" component={SobreScreen} options={{ title: '' }} />
+                <Stack.Screen name="FAQ" component={FAQScreen} options={{ title: '' }} />
+                <Stack.Screen name="Blog" component={BlogScreen} options={{ title: '' }} />
                 <Stack.Screen name="BlogPost" component={BlogPostScreen} options={{ title: '' }} />
-                <Stack.Screen name="Contato" component={ContatoScreen} options={{ title: 'Ajuda e contato' }} />
-                <Stack.Screen name="Corporativo" component={CorporativoScreen} options={{ title: 'Presentes corporativos' }} />
-                <Stack.Screen name="EnvioDevolucoes" component={EnvioDevolucoesScreen} options={{ title: 'Envio e devoluções' }} />
-                <Stack.Screen name="PoliticaReembolso" component={PoliticaReembolsoScreen} options={{ title: 'Política de reembolso' }} />
+                <Stack.Screen name="Contato" component={ContatoScreen} options={{ title: '' }} />
+                <Stack.Screen name="Corporativo" component={CorporativoScreen} options={{ title: '' }} />
+                <Stack.Screen name="EnvioDevolucoes" component={EnvioDevolucoesScreen} options={{ title: '' }} />
+                <Stack.Screen name="PoliticaReembolso" component={PoliticaReembolsoScreen} options={{ title: '' }} />
               </Stack.Navigator>
             </NavigationContainer>
           </AuthProvider>
