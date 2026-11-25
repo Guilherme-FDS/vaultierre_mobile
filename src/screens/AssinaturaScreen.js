@@ -1,253 +1,126 @@
+// Assinatura (tela 4 aprovada: resumo em cards). Status, próxima cobrança, entrega, pedidos e ações.
 import React, { useEffect, useState } from 'react'
-import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  Alert, ActivityIndicator,
-} from 'react-native'
-import { colors, spacing, radius, shadow } from '../theme'
-import BotaoDourado from '../components/BotaoDourado'
-import { useAuth } from '../context/AuthContext'
+import { View, Text, StyleSheet, Alert, TouchableOpacity, RefreshControl, ActionSheetIOS, Platform } from 'react-native'
 import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
+import { useMinhaConta, ROTULO_STATUS, corStatus, dataLonga, moeda } from '../services/dados'
+import { Tela, Cabecalho, Eyebrow, Titulo, Muted, Card, SeloAtivo, Lista, ItemLista, Vazio, Carregando, toque } from '../components/ui'
+import { colors, fonts } from '../theme'
 
-const LABEL_RECORRENCIA = {
-  mensal: 'Mensal',
-  semestral: 'Semestral',
-  anual: 'Anual',
-}
-
-const BADGE_RECORRENCIA = {
-  mensal: { texto: 'MAIS POPULAR', roxo: false },
-  semestral: { texto: 'ECONOMIZE 5%', roxo: true },
-  anual: { texto: 'MELHOR OFERTA', roxo: true },
-}
-
-const BENEFICIOS = {
-  mensal: () => ['Flexibilidade total', 'Renovação mensal', 'Sem compromisso'],
-  semestral: (p) => [`${Number(p.desconto_pct)}% de desconto`, '6 meses de acesso'],
-  anual: (p) => [`${Number(p.desconto_pct)}% de desconto`, '12 meses de acesso', 'Pagamento único à vista'],
-}
-
-// Precificação v2: Essencial (1 rótulo) e Reserva (2 rótulos)
-const rotulosDe = (prod) => (prod?.nome || '').toLowerCase().includes('reserva') ? 2 : 1
-
-function moeda(valor) {
-  return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
+const PLANO = { mensal: 'mensal', anual: 'anual', semestral: 'semestral' }
+const STATUS_PEDIDO = { pago: 'pago', pendente: 'aguardando pagamento', cancelado: 'cancelado', estornado: 'estornado' }
+const mesAno = (iso) => { const t = new Date(iso).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).replace(' de ', ' '); return t.charAt(0).toUpperCase() + t.slice(1) }
 
 export default function AssinaturaScreen({ navigation }) {
   const { user } = useAuth()
+  const { carregando, assinatura: a, pedidos, enderecos, recarregar } = useMinhaConta()
   const [produtos, setProdutos] = useState([])
-  const [produto, setProduto] = useState(null)
-  const [planos, setPlanos] = useState([])
-  const [selecionado, setSelecionado] = useState(null)
-  const [carregando, setCarregando] = useState(true)
-  const [assinando, setAssinando] = useState(false)
+  useEffect(() => { api.get('/produtos/').then(r => setProdutos(r.data)).catch(() => {}) }, [])
 
-  useEffect(() => { carregar() }, [])
+  if (!user) return (
+    <Tela><Cabecalho eyebrow="Assinatura" titulo="Sua assinatura" />
+      <Vazio icone="assinatura" titulo="Você ainda não é membro" texto="Entre na sua conta para ver sua assinatura e seus pedidos, ou conheça os planos."
+        acao="Entrar" onAcao={() => navigation.navigate('Login')} />
+      <TouchableOpacity onPress={() => navigation.navigate('Clube')}><Text style={st.link}>Conhecer os planos</Text></TouchableOpacity>
+    </Tela>
+  )
+  if (carregando) return <Carregando />
+  if (!a) return (
+    <Tela><Cabecalho eyebrow="Assinatura" titulo="Sua assinatura" />
+      <Vazio icone="clube" titulo="Nenhuma assinatura ativa" texto="Escolha o Essencial ou o Reserva e receba rótulos raros todo mês." acao="Ver os planos" onAcao={() => navigation.navigate('Clube')} />
+      {pedidos.length ? <Pedidos pedidos={pedidos} navigation={navigation} /> : null}
+    </Tela>
+  )
 
-  async function carregar() {
-    setCarregando(true)
-    try {
-      const { data: lista } = await api.get('/produtos/')
-      if (!lista?.length) return
-      const ativosProd = lista.filter(p => p.ativo !== false)
-      setProdutos(ativosProd)
-      await escolherProduto(ativosProd[0])
-    } catch {
-      Alert.alert('Erro', 'Não foi possível carregar os planos. Verifique sua conexão.')
-    } finally {
-      setCarregando(false)
+  const outro = produtos.find(p => p.id !== a.id_produto && p.ativo !== false)
+
+  function trocarEndereco() {
+    if (!enderecos.length) return navigation.navigate('EnderecoForm')
+    const nomes = enderecos.map(e => `${e.endereco}, ${e.numero} — ${e.cidade}`)
+    const escolher = async (i) => {
+      if (i == null || i >= enderecos.length) return
+      try { await api.put(`/assinaturas/${a.id}/endereco`, { id_endereco: enderecos[i].id }); recarregar() }
+      catch { Alert.alert('Ops', 'Não foi possível trocar o endereço.') }
     }
+    if (Platform.OS === 'ios') ActionSheetIOS.showActionSheetWithOptions({ options: [...nomes, 'Cancelar'], cancelButtonIndex: nomes.length, title: 'Entregar em' }, escolher)
+    else Alert.alert('Entregar em', undefined, [...nomes.slice(0, 2).map((n, i) => ({ text: n, onPress: () => escolher(i) })), { text: 'Gerenciar endereços', onPress: () => navigation.navigate('Enderecos') }])
   }
 
-  async function escolherProduto(prod) {
-    if (!prod) return
-    setProduto(prod)
-    const { data: planosData } = await api.get(`/produtos/${prod.id}/planos`)
-    const ativos = planosData.filter(p => p.ativo)
-    setPlanos(ativos)
-    const mensal = ativos.find(p => p.recorrencia === 'mensal')
-    setSelecionado(mensal?.id ?? ativos[0]?.id ?? null)
+  function trocarPlano() {
+    Alert.alert(`Trocar para o ${outro.nome}?`, 'A mudança vale a partir da próxima cobrança.', [
+      { text: 'Voltar', style: 'cancel' },
+      { text: 'Trocar', onPress: async () => {
+        try { const { data } = await api.post(`/assinaturas/${a.id}/trocar-plano`, { id_produto: outro.id }); Alert.alert('Pronto', data.message || 'Plano alterado.'); recarregar() }
+        catch (e) { Alert.alert('Ops', String(e?.response?.data?.detail || 'Não foi possível trocar agora.')) }
+      } },
+    ])
   }
 
-  async function assinar() {
-    if (!user) { navigation.navigate('Login'); return }
-    if (!selecionado || !produto) return
-    setAssinando(true)
-    try {
-      await api.post('/carrinho/adicionar', {
-        produto_id: produto.id,
-        plano_id: selecionado,
-        quantidade: 1,
-      })
-      const { data: carrinho } = await api.get('/carrinho/')
-      if (!carrinho.itens?.length) {
-        Alert.alert('Ops', 'Não foi possível adicionar ao carrinho. Tente novamente.')
-        return
-      }
-      navigation.navigate('Carrinho')
-    } catch (e) {
-      const detail = e?.response?.data?.detail
-      const msg = Array.isArray(detail)
-        ? detail.map(d => d.msg || d).join('\n')
-        : (detail || 'Não foi possível processar. Tente novamente.')
-      Alert.alert('Ops', String(msg))
-    } finally {
-      setAssinando(false)
-    }
+  function cancelar() {
+    const ate = a.proximo_ciclo ? ` Você continua membro até ${dataLonga(a.proximo_ciclo)}.` : ''
+    Alert.alert('Cancelar assinatura?', `As próximas cobranças param.${ate}`, [
+      ...(outro && a.pode_trocar_plano && /reserva/i.test(a.produto || '') ? [{ text: `Trocar para o ${outro.nome}`, onPress: trocarPlano }] : []),
+      { text: 'Manter assinatura', style: 'cancel' },
+      { text: 'Cancelar assinatura', style: 'destructive', onPress: async () => {
+        try { await api.post(`/assinaturas/${a.id}/cancelar`); recarregar() }
+        catch (e) { Alert.alert('Ops', String(e?.response?.data?.detail || 'Não foi possível cancelar agora.')) }
+      } },
+    ])
   }
-
-  if (carregando) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={colors.dourado} />
-      </View>
-    )
-  }
-
-  const planoAtivo = planos.find(p => p.id === selecionado)
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg }}>
+    <Tela refreshControl={<RefreshControl refreshing={false} onRefresh={recarregar} tintColor={colors.dourado} />}>
+      <Cabecalho eyebrow="Minha assinatura" titulo={`${a.produto || 'Vaultierre'} · ${PLANO[a.plano] || a.plano}`} />
+      <Card destaque style={{ marginTop: 0 }}>
+        <View style={st.linha}><Eyebrow>{a.status === 'cancelada' ? 'Membro até' : 'Próxima cobrança'}</Eyebrow>
+          <SeloAtivo texto={ROTULO_STATUS[a.status]} cor={corStatus(a.status)} /></View>
+        <Titulo tamanho={30} style={{ marginTop: 6 }}>{dataLonga(a.status === 'cancelada' ? a.data_fim : a.proximo_ciclo)}</Titulo>
+        {a.valor != null && a.status !== 'cancelada' ? <Muted style={{ marginTop: 4 }}>{moeda(a.valor)} no cartão cadastrado no Mercado Pago</Muted> : null}
+        {a.status === 'atrasada' ? <Text style={st.alerta}>O pagamento não foi aprovado. Atualize o cartão no Mercado Pago para não perder a próxima edição.</Text> : null}
+        {a.status === 'pendente' ? <Text style={st.alerta}>Estamos aguardando a confirmação do pagamento.</Text> : null}
+      </Card>
 
-      <View style={styles.badgePill}>
-        <Text style={styles.badgePillText}>● NOSSA ASSINATURA</Text>
-      </View>
-      <Text style={styles.titulo}>
-        Escolha seu <Text style={styles.dourado}>plano</Text>
-      </Text>
-      <Text style={styles.sub}>
-        Um ou dois rótulos raros por mês. Curadoria especializada entregue na sua porta.
-      </Text>
+      <Card>
+        <View style={st.linha}><Eyebrow>Entrega</Eyebrow>
+          <TouchableOpacity onPress={() => { toque(); trocarEndereco() }}><Text style={st.acao}>Trocar</Text></TouchableOpacity></View>
+        <Text style={st.texto}>{a.endereco || 'Endereço principal da conta'}</Text>
+        <Muted style={{ marginTop: 4 }}>Frete grátis</Muted>
+      </Card>
 
-      {produtos.length > 1 && (
-        <View style={styles.tabs}>
-          {produtos.map(prod => (
-            <TouchableOpacity
-              key={prod.id}
-              style={[styles.tab, produto?.id === prod.id && styles.tabAtiva]}
-              onPress={() => escolherProduto(prod).catch(() => {})}
-              activeOpacity={0.85}
-            >
-              <Text style={[styles.tabNome, produto?.id === prod.id && styles.tabNomeAtivo]}>{prod.nome}</Text>
-              <Text style={styles.tabSub}>{rotulosDe(prod)} {rotulosDe(prod) > 1 ? 'rótulos' : 'rótulo'}/mês</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+      <Pedidos pedidos={pedidos} navigation={navigation} />
 
-      {planos.map((plano) => {
-        const ativo = selecionado === plano.id
-        const badge = BADGE_RECORRENCIA[plano.recorrencia] ?? { texto: '', roxo: false }
-        const beneficios = (BENEFICIOS[plano.recorrencia] ?? (() => []))(plano)
-        const precoMensal = plano.recorrencia === 'mensal'
-          ? Number(plano.preco_total)
-          : Number(plano.preco_total) / (plano.recorrencia === 'semestral' ? 6 : 12)
-
-        return (
-          <TouchableOpacity
-            key={plano.id}
-            style={[styles.card, ativo && styles.cardAtivo, shadow.card]}
-            onPress={() => setSelecionado(plano.id)}
-            activeOpacity={0.85}
-          >
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardNome}>{LABEL_RECORRENCIA[plano.recorrencia] ?? plano.recorrencia}</Text>
-              {badge.texto ? (
-                <View style={[styles.cardBadge, badge.roxo && styles.cardBadgeRoxo]}>
-                  <Text style={styles.cardBadgeText}>{badge.texto}</Text>
-                </View>
-              ) : null}
-            </View>
-
-            <Text style={styles.cardPreco}>
-              {moeda(plano.preco_total)}
-              <Text style={styles.cardPeriodo}>
-                {plano.recorrencia === 'mensal' ? '/mês' : plano.recorrencia === 'semestral' ? '/semestre' : '/ano'}
-              </Text>
-            </Text>
-
-            {plano.recorrencia !== 'mensal' && (
-              <Text style={styles.cardMensal}>{moeda(precoMensal)}/mês por membro</Text>
-            )}
-
-            {Number(plano.economia) > 0 && (
-              <Text style={styles.economia}>✓ Você economiza {moeda(plano.economia)}</Text>
-            )}
-
-            <View style={styles.beneficioWrap}>
-              {beneficios.map(b => (
-                <Text key={b} style={styles.beneficio}>· {b}</Text>
-              ))}
-            </View>
-
-            {ativo && <View style={styles.indicador} />}
-          </TouchableOpacity>
-        )
-      })}
-
-      {planos.length === 0 && (
-        <View style={[styles.card, shadow.card]}>
-          <Text style={styles.sub}>Nenhum plano disponível no momento.</Text>
-        </View>
-      )}
-
-      <BotaoDourado
-        title={user ? 'Assinar agora' : 'Entrar para assinar'}
-        onPress={assinar}
-        loading={assinando}
-        style={{ marginTop: spacing.sm, marginBottom: spacing.xs }}
-      />
-
-      <Text style={styles.rodape}>
-        Você poderá revisar seu pedido e escolher o endereço de entrega antes de pagar.
-      </Text>
-
-    </ScrollView>
+      {(a.pode_trocar_plano && outro) || a.pode_cancelar ? (
+        <Lista style={{ marginTop: 12 }}>
+          {a.pode_trocar_plano && outro ? <ItemLista icone="clube" titulo={`Trocar para ${outro.nome}`} onPress={trocarPlano} ultimo={!a.pode_cancelar} /> : null}
+          {a.pode_cancelar ? <ItemLista icone="ajuda" titulo="Cancelar assinatura" perigo onPress={cancelar} ultimo /> : null}
+        </Lista>
+      ) : null}
+    </Tela>
   )
 }
 
-const styles = StyleSheet.create({
-  tabs: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-  tab: { flex: 1, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.borda || '#ddd', alignItems: 'center' },
-  tabAtiva: { borderColor: colors.dourado, backgroundColor: 'rgba(201,168,76,0.08)' },
-  tabNome: { fontSize: 16, fontWeight: '600', color: colors.texto || '#1b1a19' },
-  tabNomeAtivo: { color: colors.dourado },
-  tabSub: { fontSize: 12, color: colors.textoSecundario || '#777', marginTop: 2 },
-  container: { flex: 1, backgroundColor: colors.fundo },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.fundo },
-  badgePill: {
-    alignSelf: 'flex-start', borderWidth: 1, borderColor: colors.roxo,
-    borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 4, marginBottom: spacing.sm,
-  },
-  badgePillText: { color: colors.roxo, fontSize: 10, fontWeight: '600', letterSpacing: 1 },
-  titulo: { color: colors.texto, fontSize: 28, fontWeight: '700' },
-  dourado: { color: colors.dourado },
-  sub: { color: colors.textoSecundario, fontSize: 14, marginTop: 6, marginBottom: spacing.md, lineHeight: 21 },
-  card: {
-    backgroundColor: colors.fundoSecundario, borderRadius: radius.lg, padding: spacing.md,
-    borderWidth: 1.5, borderColor: colors.bordaCard, marginBottom: spacing.sm, overflow: 'hidden',
-  },
-  cardAtivo: { borderColor: colors.dourado },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardNome: { color: colors.texto, fontSize: 20, fontWeight: '700' },
-  cardBadge: {
-    backgroundColor: colors.dourado, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4,
-  },
-  cardBadgeRoxo: { backgroundColor: colors.roxo },
-  cardBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
-  cardPreco: { color: colors.dourado, fontSize: 26, fontWeight: '700', marginTop: spacing.xs },
-  cardPeriodo: { fontSize: 13, color: colors.textoSecundario },
-  cardMensal: { color: colors.textoSecundario, fontSize: 12, marginTop: 2 },
-  economia: { color: colors.sucesso, fontSize: 13, fontWeight: '600', marginTop: 6 },
-  beneficioWrap: { marginTop: spacing.sm, gap: 4 },
-  beneficio: { color: colors.textoSecundario, fontSize: 14 },
-  indicador: {
-    position: 'absolute', top: 0, right: 0, bottom: 0, width: 3,
-    backgroundColor: colors.dourado,
-    borderTopRightRadius: radius.lg, borderBottomRightRadius: radius.lg,
-  },
-  rodape: {
-    color: colors.textoTerciario, fontSize: 12, textAlign: 'center',
-    marginBottom: spacing.xl, marginTop: spacing.xs, lineHeight: 18,
-  },
+function Pedidos({ pedidos, navigation }) {
+  if (!pedidos.length) return null
+  return (
+    <Card onPress={() => navigation.navigate('MeusPedidos')}>
+      <Eyebrow>Pedidos</Eyebrow>
+      {pedidos.slice(0, 3).map((p, i) => (
+        <View key={p.id} style={[st.pedido, i === Math.min(pedidos.length, 3) - 1 && { borderBottomWidth: 0 }]}>
+          <Text style={st.pedidoT}>{mesAno(p.data)}</Text>
+          <Muted>{moeda(p.valor_total)} · {STATUS_PEDIDO[p.status] || p.status}</Muted>
+        </View>
+      ))}
+      {pedidos.length > 3 ? <Text style={[st.acao, { marginTop: 8 }]}>Ver todos</Text> : null}
+    </Card>
+  )
+}
+
+const st = StyleSheet.create({
+  linha: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  acao: { color: colors.douradoClaro, fontFamily: fonts.uiMedio, fontSize: 13 },
+  texto: { color: colors.texto, fontFamily: fonts.ui, fontSize: 13.5, marginTop: 6 },
+  alerta: { color: colors.erro, fontFamily: fonts.ui, fontSize: 12.5, marginTop: 10, lineHeight: 18 },
+  pedido: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.linhaSutil },
+  pedidoT: { color: colors.texto, fontFamily: fonts.uiForte, fontSize: 14 },
+  link: { color: colors.douradoClaro, textAlign: 'center', fontFamily: fonts.uiMedio, marginTop: 18 },
 })

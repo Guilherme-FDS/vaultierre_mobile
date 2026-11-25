@@ -32,3 +32,4 @@ export const getFaqs = () => get('/faqs', { filters: { ativo: true }, sort: 'ord
 export const getPosts = (params = {}) => get('/posts', { sort: 'publicado_em:desc', ...params })
 export const getPost = (slug) => get('/posts', { filters: { slug } })
 export const getPagina = (slug) => get('/paginas', { filters: { slug } })
+export const getDepoimentos = () => get('/depoimentos', { sort: 'createdAt:desc' })

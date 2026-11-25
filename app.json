@@ -7,10 +7,11 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#1b1a19",
+    "backgroundColor": "#0E0D0C",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.vaultierre.app"
+      "bundleIdentifier": "com.vaultierre.app",
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.vaultierre.app",
@@ -32,6 +33,17 @@
         {
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#C9A84C"
+        }
+      ],
+      "expo-font",
+      "expo-apple-authentication",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 140,
+          "resizeMode": "contain",
+          "backgroundColor": "#0E0D0C"
         }
       ]
     ],

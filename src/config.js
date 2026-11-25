@@ -12,9 +12,7 @@ export const CONTATO_EMAIL = 'contato@vaultierre.com.br'
 export const INSTAGRAM_HANDLE = 'clubegole'
 export const INSTAGRAM_URL = `https://www.instagram.com/${INSTAGRAM_HANDLE}/`
 
-// OAuth: IDs públicos dos apps Google/Facebook. Os atuais são os do Clube do Gole;
-// trocar quando os apps Vaultierre forem criados (o secret fica só no backend).
-export const GOOGLE_CLIENT_ID = '465037215980-thmlbjcja9f3eob73b305kfv3q0a8om1.apps.googleusercontent.com'
-export const FACEBOOK_APP_ID = '1400421088511853'
+// OAuth: ID público do Google da Vaultierre (o mesmo do site; o secret fica só no backend).
+// O anterior era o do Clube do Gole e fazia o login com Google falhar no app.
+export const GOOGLE_CLIENT_ID = '88074336369-5u50dkt39rrb6v2pr0e8q1s9ra5fjq39.apps.googleusercontent.com'
 export const GOOGLE_REDIRECT_URI = `${SITE_URL}/auth/google/callback`
-export const FACEBOOK_REDIRECT_URI = `${SITE_URL}/auth/facebook/callback`

@@ -48,8 +48,28 @@ export function AuthProvider({ children }) {
     return me.data
   }
 
-  // cadastro espera o schema completo do backend:
-  // { cpf, nome, sobrenome, data_nascimento, email, senha, telefone }
+  // Login que já volta com o token da sessão (Apple)
+  async function loginComToken(token) {
+    await AsyncStorage.setItem('token', token)
+    const me = await api.get('/auth/me')
+    setUser(me.data)
+    registrarPush()
+    return me.data
+  }
+
+  async function loginAppleNativo({ identityToken, nome, sobrenome }) {
+    const { data } = await api.post('/auth/apple/nativo', { identity_token: identityToken, nome: nome || '', sobrenome: sobrenome || '' })
+    return loginComToken(data.token)
+  }
+
+  async function excluirConta() {
+    await removerPush()
+    await api.delete('/auth/conta')
+    await AsyncStorage.removeItem('token')
+    setUser(null)
+  }
+
+  // Cadastro enxuto: { nome_completo, email, senha, data_nascimento } (CPF e celular só na compra)
   async function cadastro(campos) {
     await api.post('/auth/cadastro', campos)
     return login(campos.email, campos.senha)
@@ -63,7 +83,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginOAuth, cadastro, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginOAuth, loginComToken, loginAppleNativo, excluirConta, cadastro, logout }}>
       {children}
     </AuthContext.Provider>
   )

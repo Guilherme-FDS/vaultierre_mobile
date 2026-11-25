@@ -1,4 +1,4 @@
-import { buildGoogleAuthUrl, buildFacebookAuthUrl, extrairCode } from '../oauth'
+import { buildGoogleAuthUrl, buildAppleAuthUrl, extrairCode, extrairToken } from '../oauth'
 
 const RETURN_URL = 'exp://192.168.0.10:8081/--/oauth'
 
@@ -6,7 +6,7 @@ describe('buildGoogleAuthUrl', () => {
   const url = buildGoogleAuthUrl(RETURN_URL)
   test('aponta pro endpoint do Google com client_id e redirect do site', () => {
     expect(url).toContain('https://accounts.google.com/o/oauth2/v2/auth?')
-    expect(url).toContain('client_id=465037215980-thmlbjcja9f3eob73b305kfv3q0a8om1.apps.googleusercontent.com')
+    expect(url).toContain('client_id=88074336369-5u50dkt39rrb6v2pr0e8q1s9ra5fjq39.apps.googleusercontent.com')
     expect(url).toContain(encodeURIComponent('https://vaultierre.com.br/auth/google/callback'))
     expect(url).toContain('response_type=code')
   })
@@ -15,13 +15,19 @@ describe('buildGoogleAuthUrl', () => {
   })
 })
 
-describe('buildFacebookAuthUrl', () => {
-  const url = buildFacebookAuthUrl(RETURN_URL)
-  test('aponta pro dialog do Facebook com app_id e redirect do site', () => {
-    expect(url).toContain('https://www.facebook.com/v19.0/dialog/oauth?')
-    expect(url).toContain('client_id=1400421088511853')
-    expect(url).toContain(encodeURIComponent('https://vaultierre.com.br/auth/facebook/callback'))
+describe('buildAppleAuthUrl', () => {
+  const url = buildAppleAuthUrl({ client_id: 'br.com.vaultierre.web', redirect_uri: 'https://api.vaultierre.com.br/api/auth/apple/callback' }, RETURN_URL)
+  test('usa form_post e devolve para o app pelo state', () => {
+    expect(url).toContain('https://appleid.apple.com/auth/authorize?')
+    expect(url).toContain('response_mode=form_post')
     expect(url).toContain(`state=${encodeURIComponent('mobile|' + RETURN_URL)}`)
+  })
+})
+
+describe('extrairToken', () => {
+  test('lê o token devolvido pelo login com Apple', () => {
+    expect(extrairToken('vaultierre://oauth?token=abc.def&provider=apple')).toBe('abc.def')
+    expect(extrairToken('vaultierre://oauth?erro=apple')).toBeNull()
   })
 })
 

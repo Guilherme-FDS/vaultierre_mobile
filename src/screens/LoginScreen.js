@@ -1,383 +1,129 @@
-import React, { useState } from 'react'
-import {
-  View, Text, TextInput, StyleSheet, TouchableOpacity,
-  KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator
-} from 'react-native'
+// Boas-vindas e login (tela 1 — versão A aprovada): foto inteira, frase e botões.
+// A foto de fundo fica em IMAGENS.boasVindas (src/theme.js) para trocar fácil.
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, Platform, Alert, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as WebBrowser from 'expo-web-browser'
 import * as Linking from 'expo-linking'
-import { colors, gradients, spacing, radius, shadow } from '../theme'
-import Campo from '../components/Campo'
+import * as AppleAuthentication from 'expo-apple-authentication'
+import Svg, { Path } from 'react-native-svg'
 import { useAuth } from '../context/AuthContext'
-import { validarSenha } from '../utils/validarSenha'
-import DateTimePicker from '@react-native-community/datetimepicker'
-import { limitesNascimento, dataParaISO, dataParaBR } from '../utils/datas'
 import api from '../services/api'
-import { buildGoogleAuthUrl, buildFacebookAuthUrl, extrairCode } from '../services/oauth'
+import { buildGoogleAuthUrl, buildAppleAuthUrl, extrairCode, extrairToken } from '../services/oauth'
+import { Botao } from '../components/ui'
+import Icone from '../components/Icone'
+import { colors, fonts, gradients, IMAGENS } from '../theme'
 
-export default function LoginScreen({ navigation }) {
-  const { login, cadastro, loginOAuth } = useAuth()
-  const [modo, setModo] = useState('login')
-  const [loading, setLoading] = useState(false)
+WebBrowser.maybeCompleteAuthSession()
 
-  const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
+const LogoApple = () => (
+  <Svg width={15} height={18} viewBox="0 0 814 1000"><Path fill="#000" d="M788 341c-6 4-108 62-108 190 0 148 130 200 134 202-1 3-21 72-69 142-43 62-88 124-156 124s-86-40-164-40c-77 0-104 41-167 41s-106-57-156-128C44 789 0 668 0 554c0-184 120-282 237-282 63 0 115 41 155 41 38 0 97-44 168-44 27 0 124 3 188 72zM549 160c29-35 50-83 50-131 0-7-1-14-2-19-48 2-104 32-138 72-27 30-52 79-52 128 0 7 1 15 2 17 3 1 8 1 13 1 43 0 97-29 127-68z" /></Svg>
+)
+const LogoGoogle = () => (
+  <Svg width={16} height={16} viewBox="0 0 48 48">
+    <Path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+    <Path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+    <Path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+    <Path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+  </Svg>
+)
 
-  const [emailRecuperacao, setEmailRecuperacao] = useState('')
-  const [linkEnviado, setLinkEnviado] = useState(false)
+export default function LoginScreen({ navigation, route }) {
+  const { loginOAuth, loginComToken, loginAppleNativo } = useAuth()
+  const insets = useSafeAreaInsets()
+  const [carregando, setCarregando] = useState(false)
+  const [appleNativo, setAppleNativo] = useState(false)
+  const [appleWeb, setAppleWeb] = useState(null)
+  const depois = route?.params?.depois   // tela para abrir depois do login (ex.: checkout)
 
-  const [nome, setNome] = useState('')
-  const [sobrenome, setSobrenome] = useState('')
-  const [cpf, setCpf] = useState('')
-  const [telefone, setTelefone] = useState('')
-  const [dataNasc, setDataNasc] = useState(null) // Date | null
-  const [mostrarPicker, setMostrarPicker] = useState(false)
-  const limites = limitesNascimento()
-  const [emailCad, setEmailCad] = useState('')
-  const [senhaCad, setSenhaCad] = useState('')
+  useEffect(() => {
+    if (Platform.OS === 'ios') AppleAuthentication.isAvailableAsync().then(setAppleNativo).catch(() => {})
+    else api.get('/auth/apple/config').then(r => r.data?.ativo && setAppleWeb(r.data)).catch(() => {})
+  }, [])
 
-  const erroSenhaCad = senhaCad ? validarSenha(senhaCad) : null
-
-  async function entrar() {
-    if (!email || !senha) { Alert.alert('Atenção', 'Preencha e-mail e senha.'); return }
-    setLoading(true)
-    try {
-      await login(email.trim(), senha)
-      navigation.goBack()
-    } catch (e) {
-      const msg = e?.response?.data?.detail || 'E-mail ou senha inválidos.'
-      Alert.alert('Erro', String(Array.isArray(msg) ? msg[0]?.msg || JSON.stringify(msg) : msg))
-    } finally { setLoading(false) }
+  function concluir() {
+    if (depois) navigation.replace(depois.tela, depois.params)
+    else navigation.goBack()
+  }
+  function erro(e, padrao) {
+    const d = e?.response?.data?.detail
+    Alert.alert('Não foi possível entrar', String(typeof d === 'string' ? d : padrao))
   }
 
-  async function entrarSocial(provider) {
-    const returnUrl = Linking.createURL('oauth')
-    const authUrl = provider === 'google' ? buildGoogleAuthUrl(returnUrl) : buildFacebookAuthUrl(returnUrl)
+  async function entrarGoogle() {
+    const retorno = Linking.createURL('oauth')
     try {
-      const result = await WebBrowser.openAuthSessionAsync(authUrl, returnUrl)
-      if (result.type !== 'success') return // usuário cancelou — sem alert
-      const code = extrairCode(result.url)
+      const r = await WebBrowser.openAuthSessionAsync(buildGoogleAuthUrl(retorno), retorno)
+      if (r.type !== 'success') return
+      const code = extrairCode(r.url)
       if (!code) return
-      setLoading(true)
-      await loginOAuth(code, provider)
-      navigation.goBack()
-    } catch (e) {
-      const msg = e?.response?.data?.detail
-      Alert.alert('Erro', String(msg || 'Não foi possível entrar. Tente novamente.'))
-    } finally { setLoading(false) }
+      setCarregando(true)
+      await loginOAuth(code, 'google')
+      concluir()
+    } catch (e) { erro(e, 'Tente novamente.') } finally { setCarregando(false) }
   }
 
-  async function enviarLinkRecuperacao() {
-    if (!emailRecuperacao.trim()) { Alert.alert('Atenção', 'Informe o email.'); return }
-    setLoading(true)
+  async function entrarApple() {
     try {
-      await api.post('/auth/esqueceu-senha', { email: emailRecuperacao.trim() })
-      setLinkEnviado(true)
-    } catch {
-      Alert.alert('Erro', 'Não foi possível enviar. Tente novamente.')
-    } finally { setLoading(false) }
-  }
-
-  async function criar() {
-    if (!nome || !sobrenome || !cpf || !telefone || !emailCad || !senhaCad) {
-      Alert.alert('Atenção', 'Preencha todos os campos.')
-      return
-    }
-    const erroSenha = validarSenha(senhaCad)
-    if (erroSenha) { Alert.alert('Atenção', erroSenha); return }
-    if (!dataNasc) { Alert.alert('Atenção', 'Selecione sua data de nascimento.'); return }
-    setLoading(true)
-    try {
-      await cadastro({
-        nome, sobrenome,
-        cpf: cpf.replace(/\D/g, ''),
-        telefone: telefone.replace(/\D/g, ''),
-        data_nascimento: dataParaISO(dataNasc),
-        email: emailCad.trim(),
-        senha: senhaCad,
-      })
-      navigation.goBack()
+      if (appleNativo) {
+        const c = await AppleAuthentication.signInAsync({ requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME, AppleAuthentication.AppleAuthenticationScope.EMAIL] })
+        setCarregando(true)
+        await loginAppleNativo({ identityToken: c.identityToken, nome: c.fullName?.givenName, sobrenome: c.fullName?.familyName })
+        return concluir()
+      }
+      const retorno = Linking.createURL('oauth')
+      const r = await WebBrowser.openAuthSessionAsync(buildAppleAuthUrl(appleWeb, retorno), retorno)
+      if (r.type !== 'success') return
+      const token = extrairToken(r.url)
+      if (!token) return Alert.alert('Não foi possível entrar', 'Tente novamente com a Apple.')
+      setCarregando(true)
+      await loginComToken(token)
+      concluir()
     } catch (e) {
-      const detail = e?.response?.data?.detail
-      const msg = Array.isArray(detail)
-        ? detail.map(d => d.msg || d).join('\n')
-        : (detail || 'Erro ao criar conta. Verifique os dados.')
-      Alert.alert('Erro', String(msg))
-    } finally { setLoading(false) }
+      if (e?.code === 'ERR_REQUEST_CANCELED') return
+      erro(e, 'Tente novamente.')
+    } finally { setCarregando(false) }
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={[styles.card, shadow.forte]}>
-
-          <View style={styles.headerCard}>
-            <View style={styles.badgePill}>
-              <Text style={styles.badgePillText}>✦ VAULTIERRE</Text>
-            </View>
-            <Text style={styles.titulo}>
-              {modo === 'login' ? 'Bem-vindo de volta' : modo === 'esqueci' ? 'Recuperar senha' : 'Criar conta'}
-            </Text>
-            <Text style={styles.sub}>
-              {modo === 'login'
-                ? 'Acesse sua conta para acompanhar sua assinatura.'
-                : modo === 'esqueci'
-                  ? 'Informe seu email e enviaremos um link de recuperação.'
-                  : 'Torne-se membro e descubra experiências exclusivas.'}
-            </Text>
-          </View>
-
-          {modo === 'esqueci' ? (
-            linkEnviado ? (
-              <>
-                <Text style={styles.sucessoTexto}>
-                  Se este email estiver cadastrado, você receberá um link de recuperação.{'\n\n'}
-                  O link abre no navegador do celular para criar a nova senha.
-                </Text>
-                <BotaoGold titulo="Voltar ao login" onPress={() => { setModo('login'); setLinkEnviado(false) }} />
-              </>
-            ) : (
-              <>
-                <Campo label="E-mail cadastrado">
-                  <TextInput
-                    style={styles.input}
-                    placeholder="seu@email.com"
-                    placeholderTextColor={colors.textoTerciario}
-                    value={emailRecuperacao}
-                    onChangeText={setEmailRecuperacao}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    autoCorrect={false}
-                  />
-                </Campo>
-                <BotaoGold titulo="Enviar link" onPress={enviarLinkRecuperacao} loading={loading} />
-              </>
-            )
-          ) : modo === 'login' ? (
-            <>
-              <Campo label="E-mail">
-                <TextInput
-                  style={styles.input}
-                  placeholder="seu@email.com"
-                  placeholderTextColor={colors.textoTerciario}
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoCorrect={false}
-                />
-              </Campo>
-              <Campo label="Senha">
-                <TextInput
-                  style={styles.input}
-                  placeholder="••••••••"
-                  placeholderTextColor={colors.textoTerciario}
-                  value={senha}
-                  onChangeText={setSenha}
-                  secureTextEntry
-                />
-              </Campo>
-              <BotaoGold titulo="Entrar" onPress={entrar} loading={loading} />
-              <TouchableOpacity onPress={() => setModo('esqueci')} style={{ marginTop: spacing.sm }}>
-                <Text style={styles.esqueciLink}>Esqueceu sua senha?</Text>
-              </TouchableOpacity>
-
-              <View style={styles.ouRow}>
-                <View style={styles.ouLinha} />
-                <Text style={styles.ouTexto}>ou</Text>
-                <View style={styles.ouLinha} />
-              </View>
-              <TouchableOpacity style={styles.socialBtn} onPress={() => entrarSocial('google')} disabled={loading}>
-                <Text style={styles.socialBtnText}>Entrar com Google</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.socialBtn} onPress={() => entrarSocial('facebook')} disabled={loading}>
-                <Text style={styles.socialBtnText}>Entrar com Facebook</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Campo label="Nome">
-                    <TextInput
-                      style={styles.input}
-                      placeholder="João"
-                      placeholderTextColor={colors.textoTerciario}
-                      value={nome}
-                      onChangeText={setNome}
-                    />
-                  </Campo>
-                </View>
-                <View style={{ width: spacing.sm }} />
-                <View style={{ flex: 1 }}>
-                  <Campo label="Sobrenome">
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Silva"
-                      placeholderTextColor={colors.textoTerciario}
-                      value={sobrenome}
-                      onChangeText={setSobrenome}
-                    />
-                  </Campo>
-                </View>
-              </View>
-              <Campo label="CPF">
-                <TextInput
-                  style={styles.input}
-                  placeholder="000.000.000-00"
-                  placeholderTextColor={colors.textoTerciario}
-                  value={cpf}
-                  onChangeText={setCpf}
-                  keyboardType="numeric"
-                />
-              </Campo>
-              <Campo label="Telefone">
-                <TextInput
-                  style={styles.input}
-                  placeholder="(44) 99999-9999"
-                  placeholderTextColor={colors.textoTerciario}
-                  value={telefone}
-                  onChangeText={setTelefone}
-                  keyboardType="phone-pad"
-                />
-              </Campo>
-              <Campo label="Data de nascimento">
-                <TouchableOpacity style={styles.input} onPress={() => setMostrarPicker(!mostrarPicker)}>
-                  <Text style={{ color: dataNasc ? colors.texto : colors.textoTerciario, fontSize: 15 }}>
-                    {dataNasc ? dataParaBR(dataNasc) : 'Selecionar data'}
-                  </Text>
-                </TouchableOpacity>
-                {mostrarPicker && (
-                  <DateTimePicker
-                    value={dataNasc || limites.max}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    themeVariant="light"
-                    minimumDate={limites.min}
-                    maximumDate={limites.max}
-                    onChange={(event, d) => {
-                      if (Platform.OS === 'android') setMostrarPicker(false)
-                      if (d) setDataNasc(d)
-                    }}
-                  />
-                )}
-              </Campo>
-              <Campo label="E-mail">
-                <TextInput
-                  style={styles.input}
-                  placeholder="seu@email.com"
-                  placeholderTextColor={colors.textoTerciario}
-                  value={emailCad}
-                  onChangeText={setEmailCad}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoCorrect={false}
-                />
-              </Campo>
-              <Campo label="Senha">
-                <TextInput
-                  style={styles.input}
-                  placeholder="8+ caracteres, com maiúscula, minúscula e número"
-                  placeholderTextColor={colors.textoTerciario}
-                  value={senhaCad}
-                  onChangeText={setSenhaCad}
-                  secureTextEntry
-                />
-                {erroSenhaCad ? <Text style={styles.erroCampo}>{erroSenhaCad}</Text> : null}
-              </Campo>
-              <BotaoGold titulo="Criar conta" onPress={criar} loading={loading} />
-            </>
-          )}
-
-          <View style={styles.divisor} />
-
-          {modo !== 'esqueci' && (
-            <TouchableOpacity onPress={() => setModo(modo === 'login' ? 'cadastro' : 'login')}>
-              <Text style={styles.trocaTexto}>
-                {modo === 'login' ? 'Ainda não é membro? ' : 'Já tem conta? '}
-                <Text style={styles.trocaLink}>
-                  {modo === 'login' ? 'Criar conta' : 'Entrar'}
-                </Text>
-              </Text>
+    <View style={st.tela}>
+      <Image source={IMAGENS.boasVindas} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
+      <LinearGradient colors={gradients.hero} locations={[0, 0.42, 0.74]} style={StyleSheet.absoluteFill} />
+      <TouchableOpacity style={[st.fechar, { top: insets.top + 8 }]} onPress={() => navigation.goBack()} accessibilityLabel="Fechar">
+        <Text style={st.fecharTxt}>✕</Text>
+      </TouchableOpacity>
+      <View style={[st.conteudo, { paddingBottom: insets.bottom + 26 }]}>
+        <Image source={IMAGENS.selo} style={st.selo} contentFit="contain" />
+        <Text style={st.titulo}>Rótulos que não chegam às <Text style={st.italico}>prateleiras.</Text></Text>
+        <Text style={st.sub}>Curadoria de destilados raros, entregue todo mês na sua porta.</Text>
+        {carregando ? <ActivityIndicator color={colors.dourado} style={{ marginVertical: 30 }} /> : (
+          <>
+            {(appleNativo || appleWeb) && <Botao tipo="branco" titulo="Continuar com Apple" icone={<LogoApple />} onPress={entrarApple} style={st.btn} />}
+            <Botao tipo="contorno" titulo="Continuar com Google" icone={<LogoGoogle />} onPress={entrarGoogle} style={st.btn} />
+            <TouchableOpacity onPress={() => navigation.navigate('EmailLogin', { depois })}>
+              <Text style={st.link}>Entrar ou criar conta com e-mail</Text>
             </TouchableOpacity>
-          )}
-
-          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: spacing.sm }}>
-            <Text style={styles.voltarTexto}>← Voltar</Text>
-          </TouchableOpacity>
-
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </>
+        )}
+        <Text style={st.legal}>Ao continuar, confirmo ter 18 anos ou mais. Beba com moderação.</Text>
+      </View>
+    </View>
   )
 }
 
-function BotaoGold({ titulo, onPress, loading }) {
-  return (
-    <TouchableOpacity onPress={onPress} disabled={loading} style={{ marginTop: spacing.xs }} activeOpacity={0.85}>
-      <LinearGradient
-        colors={gradients.dourado}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ paddingVertical: 16, borderRadius: radius.pill, alignItems: 'center' }}
-      >
-        {loading
-          ? <ActivityIndicator color="#1b1a19" />
-          : <Text style={{ color: '#1b1a19', fontWeight: '700', fontSize: 16, letterSpacing: 0.3 }}>{titulo}</Text>}
-      </LinearGradient>
-    </TouchableOpacity>
-  )
-}
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.fundo },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: spacing.md, paddingVertical: spacing.lg },
-  card: {
-    backgroundColor: colors.fundoSecundario,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.bordaCard,
-    padding: spacing.lg,
-  },
-  headerCard: { marginBottom: spacing.md },
-  badgePill: {
-    alignSelf: 'flex-start', borderWidth: 1, borderColor: colors.borda,
-    borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 5, marginBottom: spacing.sm,
-  },
-  badgePillText: { color: colors.dourado, fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
-  titulo: { color: colors.texto, fontSize: 26, fontWeight: '700', marginBottom: 6 },
-  sub: { color: colors.textoSecundario, fontSize: 14, lineHeight: 21 },
-  row: { flexDirection: 'row' },
-  input: {
-    backgroundColor: colors.fundoCard,
-    color: colors.texto,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 13,
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: colors.bordaCard,
-  },
-  divisor: {
-    height: 1, backgroundColor: colors.bordaCard,
-    marginVertical: spacing.md,
-  },
-  trocaTexto: { color: colors.textoSecundario, fontSize: 14, textAlign: 'center' },
-  trocaLink: { color: colors.dourado, fontWeight: '700' },
-  voltarTexto: { color: colors.textoTerciario, fontSize: 14, textAlign: 'center' },
-  erroCampo: { color: colors.erro, fontSize: 12, marginTop: 6 },
-  esqueciLink: { color: colors.dourado, fontSize: 13, fontWeight: '600', textAlign: 'right' },
-  sucessoTexto: { color: colors.textoSecundario, fontSize: 14, lineHeight: 21, marginBottom: spacing.md },
-  ouRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: spacing.md },
-  ouLinha: { flex: 1, height: 1, backgroundColor: colors.bordaCard },
-  ouTexto: { color: colors.textoTerciario, fontSize: 12 },
-  socialBtn: {
-    borderWidth: 1, borderColor: colors.bordaCard, borderRadius: radius.pill,
-    paddingVertical: 14, alignItems: 'center', marginBottom: spacing.xs,
-    backgroundColor: colors.fundoCard,
-  },
-  socialBtnText: { color: colors.texto, fontSize: 15, fontWeight: '600' },
+const st = StyleSheet.create({
+  tela: { flex: 1, backgroundColor: colors.fundo },
+  fechar: { position: 'absolute', right: 18, zIndex: 2, width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
+  fecharTxt: { color: colors.texto, fontSize: 16 },
+  conteudo: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 24 },
+  selo: { width: 60, height: 60, marginBottom: 18 },
+  titulo: { fontFamily: fonts.serif, color: colors.texto, fontSize: 38, lineHeight: 40 },
+  italico: { fontFamily: fonts.serifItalico, color: colors.douradoClaro },
+  sub: { fontFamily: fonts.ui, color: '#CFC8BC', fontSize: 14, lineHeight: 21, marginTop: 12, marginBottom: 24 },
+  btn: { marginBottom: 10 },
+  link: { fontFamily: fonts.uiMedio, color: colors.douradoClaro, textAlign: 'center', fontSize: 14, marginTop: 6 },
+  legal: { fontFamily: fonts.ui, color: '#7E776C', textAlign: 'center', fontSize: 11, marginTop: 16 },
 })

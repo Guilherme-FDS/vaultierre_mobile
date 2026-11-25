@@ -1,75 +1,39 @@
+// Confirmação de 18+ na primeira abertura (exigência para app de bebida alcoólica).
 import React, { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
+import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
-import { colors, gradients, spacing, radius } from '../theme'
+import { Botao } from './ui'
+import { colors, fonts, gradients, IMAGENS } from '../theme'
 
 export default function AgeGate({ onConfirmar }) {
   const [recusado, setRecusado] = useState(false)
-
   return (
-    <View style={styles.overlay}>
-      <View style={styles.card}>
-        <View style={styles.chip}>
-          <Text style={styles.chipText}>● VAULTIERRE</Text>
-        </View>
-        {recusado ? (
+    <View style={st.tela}>
+      <Image source={IMAGENS.boasVindas} style={StyleSheet.absoluteFill} contentFit="cover" />
+      <LinearGradient colors={gradients.hero} locations={[0, 0.4, 0.7]} style={StyleSheet.absoluteFill} />
+      <View style={st.conteudo}>
+        <Image source={IMAGENS.selo} style={{ width: 72, height: 72, marginBottom: 20 }} contentFit="contain" />
+        <Text style={st.titulo}>{recusado ? 'Até breve.' : 'Você tem 18 anos ou mais?'}</Text>
+        <Text style={st.sub}>{recusado
+          ? 'O Vaultierre é destinado apenas a maiores de idade.'
+          : 'Este aplicativo apresenta bebidas alcoólicas e é destinado apenas a maiores de 18 anos.'}</Text>
+        {recusado ? <Botao tipo="contorno" titulo="Voltar" onPress={() => setRecusado(false)} /> : (
           <>
-            <Text style={styles.titulo}>Conteúdo para maiores de 18 anos</Text>
-            <Text style={styles.sub}>
-              Este aplicativo contém conteúdo sobre bebidas alcoólicas e é destinado apenas a maiores de idade.
-            </Text>
-            <TouchableOpacity style={styles.linkVoltar} onPress={() => setRecusado(false)}>
-              <Text style={styles.linkVoltarText}>← Voltar</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <Text style={styles.titulo}>Você é maior de 18 anos?</Text>
-            <Text style={styles.sub}>
-              Este aplicativo contém conteúdo sobre bebidas alcoólicas e é destinado apenas a maiores de idade.
-            </Text>
-            <View style={styles.botoes}>
-              <TouchableOpacity style={{ flex: 1 }} onPress={onConfirmar} activeOpacity={0.85}>
-                <LinearGradient colors={gradients.dourado} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.btnSim}>
-                  <Text style={styles.btnSimText}>Sim</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnNao} onPress={() => setRecusado(true)}>
-                <Text style={styles.btnNaoText}>Não</Text>
-              </TouchableOpacity>
-            </View>
+            <Botao titulo="Sim, tenho 18 anos ou mais" onPress={onConfirmar} style={{ marginBottom: 10 }} />
+            <Botao tipo="contorno" titulo="Não" onPress={() => setRecusado(true)} />
           </>
         )}
+        <Text style={st.legal}>Beba com moderação.</Text>
       </View>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1, backgroundColor: '#0d0d0d',
-    alignItems: 'center', justifyContent: 'center', padding: spacing.md,
-  },
-  card: {
-    width: '100%', maxWidth: 380, backgroundColor: '#141311',
-    borderWidth: 1, borderColor: colors.dourado, borderRadius: radius.lg,
-    padding: spacing.lg, alignItems: 'center',
-  },
-  chip: {
-    borderWidth: 1, borderColor: 'rgba(201,168,76,0.35)', borderRadius: radius.pill,
-    paddingHorizontal: 12, paddingVertical: 5, marginBottom: spacing.md,
-  },
-  chipText: { color: colors.dourado, fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
-  titulo: { color: '#FFFFFF', fontSize: 22, fontWeight: '700', textAlign: 'center' },
-  sub: { color: '#aaaaaa', fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: spacing.sm },
-  botoes: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg, alignSelf: 'stretch' },
-  btnSim: { paddingVertical: 14, borderRadius: radius.md, alignItems: 'center' },
-  btnSimText: { color: '#0d0d0d', fontWeight: '700', fontSize: 15 },
-  btnNao: {
-    flex: 1, paddingVertical: 14, borderRadius: radius.md, alignItems: 'center',
-    borderWidth: 1, borderColor: colors.dourado,
-  },
-  btnNaoText: { color: colors.dourado, fontWeight: '700', fontSize: 15 },
-  linkVoltar: { marginTop: spacing.lg },
-  linkVoltarText: { color: colors.dourado, fontSize: 12, fontWeight: '600' },
+const st = StyleSheet.create({
+  tela: { flex: 1, backgroundColor: colors.fundo },
+  conteudo: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 24, paddingBottom: 48 },
+  titulo: { color: colors.texto, fontFamily: fonts.serif, fontSize: 36, lineHeight: 38 },
+  sub: { color: '#CFC8BC', fontFamily: fonts.ui, fontSize: 14, lineHeight: 21, marginTop: 12, marginBottom: 26 },
+  legal: { color: '#7E776C', fontFamily: fonts.ui, fontSize: 11, textAlign: 'center', marginTop: 16 },
 })
