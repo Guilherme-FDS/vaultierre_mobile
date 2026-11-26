@@ -8,6 +8,7 @@ import { Tela, Cabecalho, Eyebrow, Titulo, Muted, Card, SeloAtivo, Lista, ItemLi
 import { colors, fonts } from '../theme'
 
 const PLANO = { mensal: 'mensal', anual: 'anual', semestral: 'semestral' }
+const TIPO_PAUSA = { pulo: 'Edição pulada', pausa: 'Pausa', adiamento: 'Edição adiada' }
 const STATUS_PEDIDO = { pago: 'pago', pendente: 'aguardando pagamento', cancelado: 'cancelado', estornado: 'estornado' }
 const mesAno = (iso) => { const t = new Date(iso).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).replace(' de ', ' '); return t.charAt(0).toUpperCase() + t.slice(1) }
 
@@ -15,7 +16,13 @@ export default function AssinaturaScreen({ navigation }) {
   const { user } = useAuth()
   const { carregando, assinatura: a, pedidos, enderecos, recarregar } = useMinhaConta()
   const [produtos, setProdutos] = useState([])
+  const [opc, setOpc] = useState(null)
   useEffect(() => { api.get('/produtos/').then(r => setProdutos(r.data)).catch(() => {}) }, [])
+  useEffect(() => {
+    if (a?.id && a.status === 'ativa') api.get(`/assinaturas/${a.id}/opcoes`).then(r => setOpc(r.data)).catch(() => setOpc(null))
+    else setOpc(null)
+  }, [a?.id, a?.status, a?.proximo_ciclo])
+  const atualizar = () => { recarregar(); if (a?.id) api.get(`/assinaturas/${a.id}/opcoes`).then(r => setOpc(r.data)).catch(() => {}) }
 
   if (!user) return (
     <Tela><Cabecalho eyebrow="Assinatura" titulo="Sua assinatura" />
@@ -56,9 +63,34 @@ export default function AssinaturaScreen({ navigation }) {
     ])
   }
 
+  const alvo = opc ? mesAno(opc.edicao_alvo + 'T12:00:00') : ''
+  async function executar(fn, ok) {
+    try { const { data } = await fn(); Alert.alert('Pronto', ok(data)); atualizar() }
+    catch (e) { Alert.alert('Ops', String(e?.response?.data?.detail || 'Não foi possível agora.')) }
+  }
+  function pular() {
+    const anual = !opc.mensal
+    Alert.alert(anual ? `Adiar a edição de ${alvo}?` : `Pular a edição de ${alvo}?`,
+      anual ? 'Seu plano anual ganha mais 1 mês no fim.' : 'Não haverá caixa nem cobrança nesse mês. Depois tudo volta ao normal.', [
+      { text: 'Voltar', style: 'cancel' },
+      { text: anual ? 'Adiar' : 'Pular', onPress: () => executar(() => api.post(`/assinaturas/${a.id}/pular`),
+        d => d.tipo === 'adiamento' ? `Edição adiada. Seu plano vai até ${dataLonga(d.novo_fim)}.` : `Edição pulada. A cobrança volta em ${dataLonga(d.retoma_em)}.`) },
+    ])
+  }
+  function pausar() {
+    const op = (m) => ({ text: `${m} ${m > 1 ? 'meses' : 'mês'}`, onPress: () => executar(() => api.post(`/assinaturas/${a.id}/pausar`, { meses: m }),
+      d => `Assinatura pausada. A cobrança volta em ${dataLonga(d.retoma_em)}.`) })
+    Alert.alert('Pausar por quanto tempo?', `A partir da edição de ${alvo}. Sem caixa e sem cobrança no período.`, [op(1), op(2), op(3), { text: 'Voltar', style: 'cancel' }])
+  }
+  function desfazer(p) {
+    Alert.alert('Desfazer?', 'Sua caixa volta a vir normalmente.', [{ text: 'Voltar', style: 'cancel' },
+      { text: 'Desfazer', onPress: () => executar(() => api.delete(`/pausas/${p.id}`), () => 'Sua assinatura segue normalmente.') }])
+  }
+
   function cancelar() {
     const ate = a.proximo_ciclo ? ` Você continua membro até ${dataLonga(a.proximo_ciclo)}.` : ''
     Alert.alert('Cancelar assinatura?', `As próximas cobranças param.${ate}`, [
+      ...(opc?.mensal && opc.pausas_restantes ? [{ text: 'Pausar por um tempo', onPress: pausar }] : opc?.mensal && opc.pulos_restantes ? [{ text: 'Pular só a próxima', onPress: pular }] : []),
       ...(outro && a.pode_trocar_plano && /reserva/i.test(a.produto || '') ? [{ text: `Trocar para o ${outro.nome}`, onPress: trocarPlano }] : []),
       { text: 'Manter assinatura', style: 'cancel' },
       { text: 'Cancelar assinatura', style: 'destructive', onPress: async () => {
@@ -86,6 +118,25 @@ export default function AssinaturaScreen({ navigation }) {
         <Text style={st.texto}>{a.endereco || 'Endereço principal da conta'}</Text>
         <Muted style={{ marginTop: 4 }}>Frete grátis</Muted>
       </Card>
+
+      {opc ? (
+        <Card>
+          <Eyebrow>Precisa de um tempo?</Eyebrow>
+          <Muted style={{ marginTop: 6, lineHeight: 18 }}>Vale para a edição de {alvo} se pedir até {dataLonga(opc.limite)}.</Muted>
+          {opc.agendadas.map(p => (
+            <View key={p.id} style={st.agendada}>
+              <Text style={st.agendadaT}>{TIPO_PAUSA[p.tipo]}: {p.de === p.ate ? mesAno(p.de + 'T12:00:00') : `${mesAno(p.de + 'T12:00:00')} a ${mesAno(p.ate + 'T12:00:00')}`}</Text>
+              {p.tipo !== 'adiamento' ? <TouchableOpacity onPress={() => { toque(); desfazer(p) }}><Text style={st.acao}>Desfazer</Text></TouchableOpacity> : null}
+            </View>
+          ))}
+          <Lista style={{ marginTop: 10 }}>
+            {opc.mensal ? <>
+              <ItemLista icone="caixa" titulo="Pular a próxima edição" detalhe={`${opc.pulos_restantes} de 2`} onPress={opc.pulos_restantes ? pular : undefined} />
+              <ItemLista icone="cadeado" titulo="Pausar de 1 a 3 meses" detalhe={`${opc.pausas_restantes} de 2`} onPress={opc.pausas_restantes ? pausar : undefined} ultimo />
+            </> : <ItemLista icone="caixa" titulo="Adiar a próxima edição" detalhe={`${opc.adiamentos_restantes} de 2`} onPress={opc.adiamentos_restantes ? pular : undefined} ultimo />}
+          </Lista>
+        </Card>
+      ) : null}
 
       <Pedidos pedidos={pedidos} navigation={navigation} />
 
@@ -122,5 +173,7 @@ const st = StyleSheet.create({
   alerta: { color: colors.erro, fontFamily: fonts.ui, fontSize: 12.5, marginTop: 10, lineHeight: 18 },
   pedido: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.linhaSutil },
   pedidoT: { color: colors.texto, fontFamily: fonts.uiForte, fontSize: 14 },
+  agendada: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(201,168,76,0.08)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9, marginTop: 10 },
+  agendadaT: { color: colors.texto, fontFamily: fonts.uiMedio, fontSize: 13, flex: 1 },
   link: { color: colors.douradoClaro, textAlign: 'center', fontFamily: fonts.uiMedio, marginTop: 18 },
 })

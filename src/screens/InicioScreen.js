@@ -1,6 +1,8 @@
 // Início (tela 2 aprovada): edição do mês + 4 blocos para o assinante; vitrine para o visitante.
-import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, ScrollView } from 'react-native'
+import React, { useCallback, useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, ScrollView, Alert } from 'react-native'
+import { useFocusEffect } from '@react-navigation/native'
+import api from '../services/api'
 import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useAuth } from '../context/AuthContext'
@@ -13,27 +15,29 @@ function saudacao() {
   const h = new Date().getHours()
   return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'
 }
-function falta(alvo) {
-  const ms = Math.max(0, alvo - Date.now())
-  return { d: Math.floor(ms / 864e5), h: Math.floor(ms / 36e5) % 24, m: Math.floor(ms / 6e4) % 60 }
+const mesNomeIso = (iso) => mesNome(new Date(iso + 'T12:00:00'))
+
+// Status da caixa do mês (GET /caixa). Nunca mostra rótulo: só status e pista sem nome.
+const ESTADOS = {
+  em_curadoria: (c) => ({ eyebrow: `Edição de ${mesNomeIso(c.mes)}`, titulo: 'Em curadoria', texto: 'Sua caixa está sendo preparada a portas fechadas.' }),
+  a_caminho: (c) => ({ eyebrow: `Edição de ${mesNomeIso(c.mes)}`, titulo: 'A caminho', texto: c.pista || 'Algo raro está chegando.', pista: !!c.pista }),
+  aguardando_pagamento: (c) => ({ eyebrow: 'Sua assinatura', titulo: 'Aguardando pagamento', texto: c.proxima_cobranca ? `Primeira cobrança em ${dataCurta(c.proxima_cobranca)}. Depois disso sua caixa entra em curadoria.` : 'Assim que o pagamento for aprovado, sua caixa entra em curadoria.' }),
+  pausada: () => ({ eyebrow: 'Sua assinatura', titulo: 'Assinatura pausada', texto: 'Sem caixa nem cobrança por enquanto. Quando a pausa acabar, a curadoria volta.' }),
 }
 
-function CartaoEdicao({ alvo, onPress }) {
-  const [t, setT] = useState(falta(alvo))
-  useEffect(() => { const id = setInterval(() => setT(falta(alvo)), 30000); return () => clearInterval(id) }, [alvo])
-  const pad = (n) => String(n).padStart(2, '0')
+function CartaoCaixa({ caixa, assinante, onPress, onRecebi, recebendo }) {
+  const e = (assinante && ESTADOS[caixa?.status]?.(caixa)) || { eyebrow: 'Vaultierre', titulo: 'Uma caixa fechada por mês', texto: 'Você não sabe o que vem. Esse é o ponto.' }
   return (
     <TouchableOpacity activeOpacity={0.9} onPress={() => { toque(); onPress?.() }} style={st.edicao}>
       <Image source={IMAGENS.edicaoDestaque} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />
-      <LinearGradient colors={['transparent', 'rgba(14,13,12,0.92)']} locations={[0.35, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['rgba(14,13,12,0.25)', 'rgba(14,13,12,0.82)', '#0E0D0C']} locations={[0, 0.45, 0.8]} style={StyleSheet.absoluteFill} />
       <View style={st.edicaoInfo}>
-        <Eyebrow>Edição de {mesNome(new Date(alvo))}</Eyebrow>
-        <Titulo tamanho={24} style={{ marginBottom: 10 }}>A revelação está chegando</Titulo>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          {[[t.d, 'dias'], [t.h, 'h'], [t.m, 'min']].map(([n, u]) => (
-            <View key={u} style={st.chip}><Text style={st.chipTxt}><Text style={{ color: colors.douradoClaro }}>{pad(n)}</Text> {u}</Text></View>
-          ))}
-        </View>
+        <Eyebrow>{e.eyebrow}</Eyebrow>
+        <Titulo tamanho={26}>{e.titulo}</Titulo>
+        <Text style={[st.edicaoTexto, e.pista && st.pista]}>{e.pista ? `Pista: ${e.texto}` : e.texto}</Text>
+        {assinante && caixa?.status === 'a_caminho' ? (
+          <Botao titulo="Já recebi minha caixa" carregando={recebendo} onPress={onRecebi} style={{ marginTop: 12 }} />
+        ) : null}
       </View>
     </TouchableOpacity>
   )
@@ -59,16 +63,30 @@ export default function InicioScreen({ navigation }) {
   const posts = usePosts(3)
   const nome = (user?.nome || '').split(' ')[0]
 
-  // A revelação acompanha o próximo ciclo da assinatura; sem assinatura, o 1º dia do mês que vem
-  const proximoMes = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1, 9)
-  const alvo = assinatura?.proximo_ciclo ? new Date(assinatura.proximo_ciclo + 'T09:00:00').getTime() : proximoMes.getTime()
+  const [caixa, setCaixa] = useState(null)
+  const [recebendo, setRecebendo] = useState(false)
+  const carregarCaixa = useCallback(() => { if (user) api.get('/caixa').then(r => setCaixa(r.data)).catch(() => {}); else setCaixa(null) }, [user])
+  useFocusEffect(carregarCaixa)
+
+  function recebi() {
+    Alert.alert('A caixa já está com você?', 'Ao confirmar, revelamos os rótulos e as fichas de degustação. Só confirme com a caixa nas mãos.', [
+      { text: 'Ainda não', style: 'cancel' },
+      { text: 'Sim, revelar', onPress: async () => {
+        setRecebendo(true)
+        try { const { data } = await api.post(`/envios/${caixa.id_envio}/recebi`); carregarCaixa(); navigation.navigate('Revelacao', { entrada: data, revelar: true }) }
+        catch (e) { Alert.alert('Ops', String(e?.response?.data?.detail || 'Não foi possível confirmar agora.')) }
+        finally { setRecebendo(false) }
+      } },
+    ])
+  }
 
   return (
-    <Tela refreshControl={<RefreshControl refreshing={false} onRefresh={recarregar} tintColor={colors.dourado} />}>
+    <Tela refreshControl={<RefreshControl refreshing={false} onRefresh={() => { recarregar(); carregarCaixa() }} tintColor={colors.dourado} />}>
       <Cabecalho eyebrow={user ? saudacao() : 'Vaultierre'} titulo={user ? nome || 'Membro' : 'Raro por natureza'}
         direita={<TouchableOpacity style={st.avatar} onPress={() => navigation.navigate(user ? 'Conta' : 'Login')}><Icone nome={user ? 'sino' : 'conta'} /></TouchableOpacity>} />
 
-      <CartaoEdicao alvo={alvo} onPress={() => navigation.navigate(assinatura ? 'Assinatura' : 'Clube')} />
+      <CartaoCaixa caixa={caixa} assinante={!!assinatura} recebendo={recebendo} onRecebi={recebi}
+        onPress={() => navigation.navigate(assinatura ? 'Assinatura' : 'Clube')} />
 
       {assinatura ? (
         <View style={st.grade}>
@@ -82,9 +100,10 @@ export default function InicioScreen({ navigation }) {
         <>
           <Card destaque style={{ marginTop: 14 }}>
             <Eyebrow>Como funciona</Eyebrow>
-            {[['clube', 'Escolha o plano', 'Essencial (1 rótulo) ou Reserva (2 rótulos).'],
-              ['caixa', 'Receba todo mês', 'Caixa numerada, frete grátis, cartão de degustação.'],
-              ['bussola', 'Descubra o paladar', 'A curadoria escolhe a portas fechadas.']].map(([ic, t, d]) => (
+            {[['bussola', 'Conte seu paladar', 'Um quiz rápido guia a curadoria.'],
+              ['clube', 'Nós escolhemos', 'Essencial (1 rótulo) ou Reserva (2), escolhidos a portas fechadas.'],
+              ['caixa', 'Abra a surpresa', 'A caixa chega fechada, sem aviso do que vem.'],
+              ['adega', 'Descubra e coleciona', 'Confirme o recebimento e a ficha se revela aqui.']].map(([ic, t, d]) => (
               <View key={t} style={st.passo}><Icone nome={ic} /><View style={{ flex: 1 }}><Text style={st.blocoTitulo}>{t}</Text><Muted>{d}</Muted></View></View>
             ))}
             <Botao titulo="Conhecer os planos" onPress={() => navigation.navigate('Clube')} style={{ marginTop: 14 }} />
@@ -106,10 +125,10 @@ export default function InicioScreen({ navigation }) {
 
 const st = StyleSheet.create({
   avatar: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: colors.bordaCard, alignItems: 'center', justifyContent: 'center' },
-  edicao: { height: 220, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.fundoSecundario },
-  edicaoInfo: { position: 'absolute', left: 16, right: 16, bottom: 14 },
-  chip: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 5 },
-  chipTxt: { color: colors.texto, fontFamily: fonts.uiForte, fontSize: 11.5 },
+  edicao: { minHeight: 230, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.fundoSecundario, justifyContent: 'flex-end' },
+  edicaoTexto: { color: colors.textoSecundario, fontFamily: fonts.ui, fontSize: 13.5, lineHeight: 19, marginTop: 4 },
+  pista: { color: colors.douradoClaro, fontFamily: fonts.serifItalico, fontSize: 17, lineHeight: 22 },
+  edicaoInfo: { paddingHorizontal: 16, paddingBottom: 16, paddingTop: 90 },
   grade: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
   bloco: { width: '48.5%', height: 104, backgroundColor: colors.fundoSecundario, borderWidth: 1, borderColor: colors.bordaCard, borderRadius: 16, padding: 13, justifyContent: 'space-between' },
   blocoTitulo: { color: colors.texto, fontFamily: fonts.uiForte, fontSize: 14 },

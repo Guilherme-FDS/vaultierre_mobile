@@ -23,6 +23,7 @@ import ContaScreen from './src/screens/ContaScreen'
 import LoginScreen from './src/screens/LoginScreen'
 import EmailLoginScreen from './src/screens/EmailLoginScreen'
 import CheckoutScreen from './src/screens/CheckoutScreen'
+import RevelacaoScreen from './src/screens/RevelacaoScreen'
 import IndiqueScreen from './src/screens/IndiqueScreen'
 import EnderecoFormScreen from './src/screens/EnderecoFormScreen'
 import EditarPerfilScreen from './src/screens/EditarPerfilScreen'
@@ -114,6 +115,7 @@ export default function App() {
                 <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false, presentation: 'fullScreenModal', animation: 'fade' }} />
                 <Stack.Screen name="EmailLogin" component={EmailLoginScreen} options={{ title: '' }} />
                 <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: '' }} />
+                <Stack.Screen name="Revelacao" component={RevelacaoScreen} options={{ title: '' }} />
                 <Stack.Screen name="Indique" component={IndiqueScreen} options={{ title: '' }} />
                 <Stack.Screen name="EnderecoForm" component={EnderecoFormScreen} options={{ title: '', presentation: 'modal' }} />
                 <Stack.Screen name="EditarPerfil" component={EditarPerfilScreen} options={{ title: '' }} />
