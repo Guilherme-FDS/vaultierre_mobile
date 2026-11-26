@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ciclo da surpresa</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1600px; background: #F6F3EE; color: #1B1A19; font-family: 'DM Sans', sans-serif; padding: 44px 44px 56px; }
+  h1 { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 46px; }
+  .sub { color: #6B665F; font-size: 16px; margin: 6px 0 30px; max-width: 1100px; line-height: 1.5; }
+  .sub b { color: #1B1A19; }
+  .ciclo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .etapa { background: #fff; border: 1px solid #E2DCCF; border-radius: 18px; padding: 18px; position: relative; display: flex; flex-direction: column; }
+  .etapa:not(:last-child)::after { content: '→'; position: absolute; right: -13px; top: 22px; color: #A8842C; font-weight: 700; font-size: 18px; }
+  .n { font-size: 11px; letter-spacing: 2px; color: #A8842C; font-weight: 700; text-transform: uppercase; }
+  .etapa h3 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; margin: 2px 0 6px; }
+  .frase { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: #6B665F; margin-bottom: 12px; }
+  .lado { font-size: 12.5px; line-height: 1.45; padding: 8px 10px; border-radius: 9px; margin-bottom: 6px; }
+  .lado b { display: block; font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 2px; }
+  .cli { background: #FBF6EA; } .cli b { color: #8a6a1f; }
+  .vau { background: #EEF0F6; } .vau b { color: #3B4A7A; }
+  .app { background: #EEF6F0; } .app b { color: #2F7D4F; }
+  .segredo { margin-top: auto; font-size: 12px; color: #A4453A; padding-top: 8px; border-top: 1px dashed #E2DCCF; }
+  .volta { margin: 16px auto 0; text-align: center; font-size: 14px; color: #6B665F; }
+  .volta span { background: #fff; border: 1px solid #E2DCCF; border-radius: 999px; padding: 9px 18px; display: inline-block; }
+  .volta b { color: #A8842C; }
+  h2 { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; margin: 36px 0 14px; }
+  .grade3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .caixa { background: #fff; border: 1px solid #E2DCCF; border-radius: 16px; padding: 18px; font-size: 14px; line-height: 1.55; }
+  .caixa h4 { font-size: 15px; margin-bottom: 6px; }
+  .caixa ul { padding-left: 18px; color: #444; }
+  .regra { background: #1B1A19; color: #F3EEE4; border-radius: 16px; padding: 18px 22px; font-size: 15px; line-height: 1.6; margin-top: 14px; }
+  .regra b { color: #E2C06A; }
+</style>
+</head>
+<body>
+<h1>O ciclo da surpresa</h1>
+<p class="sub"><b>O cliente nunca escolhe o rótulo, mas ensina a curadoria.</b> Ele conta do que gosta (quiz e notas), a caixa chega fechada e a ficha só aparece quando ela já está nas mãos dele. Cada caixa aberta vira um item da coleção e deixa a próxima ainda mais certeira.</p>
+
+<div class="ciclo">
+  <div class="etapa"><span class="n">1 · Antes</span><h3>Conte seu paladar</h3><p class="frase">"Do que você gosta?"</p>
+    <div class="lado cli"><b>Cliente</b>Faz o quiz uma vez (e refaz quando quiser).</div>
+    <div class="lado vau"><b>Vaultierre</b>Vê o perfil de cada assinante no admin.</div>
+    <div class="lado app"><b>Site e app</b>Mostram "Seu perfil: Defumado &amp; Intenso".</div>
+    <div class="segredo">Nunca diz qual rótulo vem.</div></div>
+  <div class="etapa"><span class="n">2 · Cobrança</span><h3>A curadoria escolhe</h3><p class="frase">"Sua caixa está sendo preparada."</p>
+    <div class="lado cli"><b>Cliente</b>Recebe o aviso de assinatura renovada.</div>
+    <div class="lado vau"><b>Vaultierre</b>Cadastra a edição do mês e escolhe pelo perfil (Essencial = 1, Reserva = 2).</div>
+    <div class="lado app"><b>Site e app</b>Status: "Em curadoria".</div>
+    <div class="segredo">Edição cadastrada, mas trancada.</div></div>
+  <div class="etapa"><span class="n">3 · Envio</span><h3>A caminho</h3><p class="frase">"Algo raro está chegando."</p>
+    <div class="lado cli"><b>Cliente</b>Recebe aviso de envio e rastreio.</div>
+    <div class="lado vau"><b>Vaultierre</b>Marca a caixa como enviada.</div>
+    <div class="lado app"><b>Site e app</b>Status "A caminho" + uma pista opcional (ex.: "um país que você ainda não provou").</div>
+    <div class="segredo">Pista sem nome, sem foto.</div></div>
+  <div class="etapa"><span class="n">4 · Chegou</span><h3>Abra a surpresa</h3><p class="frase">"Já recebi minha caixa."</p>
+    <div class="lado cli"><b>Cliente</b>Abre a caixa física e toca em "Já recebi".</div>
+    <div class="lado vau"><b>Vaultierre</b>Fica sabendo que a caixa chegou.</div>
+    <div class="lado app"><b>Site e app</b>Revelação: ficha completa, história do rótulo, harmonização.</div>
+    <div class="segredo">Só aqui o rótulo é revelado.</div></div>
+  <div class="etapa"><span class="n">5 · Coleção</span><h3>Avalie e coleciona</h3><p class="frase">"Mais um para a sua adega."</p>
+    <div class="lado cli"><b>Cliente</b>Dá uma nota de 1 a 5 e vê a adega crescer (países, categorias, edições numeradas).</div>
+    <div class="lado vau"><b>Vaultierre</b>Usa as notas para afinar o perfil e não repetir rótulo.</div>
+    <div class="lado app"><b>Site e app</b>"Minha adega" com todas as fichas recebidas.</div>
+    <div class="segredo">Coleção é pessoal: cada um vê a sua.</div></div>
+</div>
+<p class="volta"><span>As notas voltam para o perfil → <b>a próxima caixa acerta mais</b> → o ciclo recomeça no mês seguinte</span></p>
+
+<h2>Como isso fica sem confundir ninguém</h2>
+<div class="grade3">
+  <div class="caixa"><h4>No site ("Como funciona")</h4><ul>
+    <li><b>Conte seu paladar:</b> o quiz guia a curadoria.</li>
+    <li><b>Nós escolhemos:</b> você não sabe o que vem.</li>
+    <li><b>Abra a surpresa:</b> a caixa chega fechada.</li>
+    <li><b>Descubra e coleciona:</b> a ficha se revela no app quando você confirma o recebimento.</li></ul></div>
+  <div class="caixa"><h4>No app</h4><ul>
+    <li><b>Início:</b> status da caixa do mês ("Em curadoria", "A caminho", "Chegou? Toque para revelar"). <b>Sai a contagem regressiva.</b></li>
+    <li><b>Adega:</b> a coleção pessoal com as fichas reveladas e as notas.</li>
+    <li><b>Conta:</b> o perfil de paladar, para refazer o quiz.</li></ul></div>
+  <div class="caixa"><h4>"O que já entregamos" (vitrine)</h4><ul>
+    <li>Mostra só <b>edições encerradas</b>, depois que todos os assinantes daquela edição já receberam.</li>
+    <li>Atrai quem ainda não assinou sem estragar a surpresa de quem assina.</li></ul></div>
+</div>
+<div class="regra"><b>Regra de ouro:</b> nenhum lugar (site, app, notificação, e-mail) mostra o nome ou a foto de um rótulo antes de o cliente tocar em <b>"Já recebi minha caixa"</b>. Antes disso, só status e pistas sem nome.</div>
+</body>
+</html>
